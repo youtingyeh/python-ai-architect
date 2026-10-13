@@ -1,4 +1,4 @@
-name: Deploy static site to Pages
+name: Validate and deploy interactive course
 
 on:
   push:
@@ -15,20 +15,46 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install test dependencies
+        run: npm ci
+      - name: Validate lessons and learning interactions
+        run: npm test
+      - name: Package static course
+        run: |
+          mkdir -p _site
+          cp index.html styles.css app.js course.js lessons.js progress.js python-worker.js _site/
+      - name: Upload course for download
+        uses: actions/upload-artifact@v4
+        with:
+          name: interactive-course
+          path: _site/
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site/
   deploy:
+    needs: validate
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Pages
+      - name: Set up Pages
         uses: actions/configure-pages@v5
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: .
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4

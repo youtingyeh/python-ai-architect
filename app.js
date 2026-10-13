@@ -1,78 +1,144 @@
-const course = [
-{w:1,p:'Python 工程基礎',t:'函式、資料結構與程式拆解',g:'把「會寫 Python」提升到能把問題拆成可測試的小單位。',topics:['function','list / dict','scope'],tasks:['重寫學生分數管理程式','把新增、刪除、搜尋、排序拆成函式','自己寫 5 組測試資料'],pass:['能解釋每個函式的輸入與輸出','不靠 AI 完成基本 CRUD','能處理空資料與錯誤輸入'],out:'CLI 學生成績管理器 v1'},
-{w:2,p:'Python 工程基礎',t:'Class、Module 與 Exception',g:'學會把資料與行為組織成可維護的 Python 專案。',topics:['class','module','exception'],tasks:['建立 Student 與 StudentManager','拆成 main.py / student.py / manager.py','加入重複學生與錯誤成績處理'],pass:['能說明 class 為何比單一 dict 合適','能主動 raise 與捕捉例外','能跨檔案 import'],out:'模組化學生管理器'},
-{w:3,p:'Python 工程基礎',t:'JSON、Typing 與 pytest',g:'讓程式開始具備資料保存與自動驗證能力。',topics:['json','typing','pytest'],tasks:['把資料寫入 JSON','替主要函式加 type hints','撰寫正常、錯誤、邊界測試'],pass:['重新啟動後資料仍存在','pytest 可一次跑完','至少 8 個有效測試'],out:'CLI 記帳程式 + pytest'},
-{w:4,p:'Python 工程基礎',t:'Linux 與 Process',g:'理解程式不是「在 VS Code 裡跑」，而是在作業系統中成為 process。',topics:['shell','process','PATH'],tasks:['在 terminal 建檔與執行程式','用 ps 找 Python process','用環境變數傳設定值'],pass:['能解釋 shell → OS → process → Python','會使用 pwd/ls/cd/grep/find','知道 PATH 與 environment variable 的用途'],out:'Linux 操作筆記 + 指令速查表'},
-{w:5,p:'Python 工程基礎',t:'Git 與版本控制',g:'建立所有後續工程工作的安全網。',topics:['git','branch','merge'],tasks:['建立 feature branch','做至少 5 次有意義 commit','刻意製造並解決 merge conflict'],pass:['會看 diff 與 log','知道 branch 與 commit 的差別','可獨立解 conflict'],out:'第一個完整 Git workflow'},
-{w:6,p:'Web 與 API',t:'HTTP、DNS 與 Browser',g:'理解網址輸入後，資料如何真的從瀏覽器跑到伺服器。',topics:['HTTP','DNS','TCP/TLS'],tasks:['用 curl 呼叫網站','觀察 request/response headers','整理 GET/POST/PUT/PATCH/DELETE'],pass:['能說明 DNS → TCP → TLS → HTTP','知道常見 2xx/4xx/5xx','能分辨 header 與 body'],out:'一張 Web Request 流程圖'},
-{w:7,p:'Web 與 API',t:'FastAPI：第一個後端',g:'把 Python 程式變成可被其他程式呼叫的服務。',topics:['FastAPI','route','JSON'],tasks:['建立 /students API','完成 GET/POST/PATCH/DELETE','用 curl 或 Swagger 測試'],pass:['每個 endpoint 都能說明輸入輸出','錯誤 ID 回正確 status code','不靠前端也能測 API'],out:'Students REST API v1'},
-{w:8,p:'Web 與 API',t:'API Schema 與 Validation',g:'把 API 當成系統之間的契約，而不是隨意傳 JSON。',topics:['Pydantic','schema','validation'],tasks:['建立 StudentCreate/Update schema','測試錯誤型別與缺欄位','統一 error response'],pass:['錯誤資料不會直接進系統','能說明 request schema 的價值','知道 400/404/422 的差異'],out:'有 validation 的 REST API'},
-{w:9,p:'資料庫',t:'SQL 與 PostgreSQL',g:'從記憶體資料轉向真正的持久化資料庫。',topics:['PostgreSQL','SELECT','CRUD'],tasks:['建立 students/courses/enrollments','練 INSERT/SELECT/UPDATE/DELETE','將 FastAPI 接到 PostgreSQL'],pass:['能自己寫基本 SQL','關閉 API 後資料仍存在','理解 table/row/column'],out:'FastAPI + PostgreSQL'},
-{w:10,p:'資料庫',t:'Relationship 與 ER Diagram',g:'開始用資料模型而不是畫面來思考系統。',topics:['1:N','N:M','PK/FK'],tasks:['設計 User/Course/Enrollment/Assignment/Submission','畫 ER Diagram','替每個 relationship 說明原因'],pass:['能分辨 1:1、1:N、N:M','知道何時需要 junction table','FK 設計合理'],out:'Mini LMS ER Diagram'},
-{w:11,p:'資料庫',t:'Index、Transaction 與 ACID',g:'理解資料庫的效能與一致性取捨。',topics:['index','transaction','ACID'],tasks:['替查詢欄位建立 index 並比較','做一個需 rollback 的交易','研究為何不能每欄都 index'],pass:['能解釋 index 的成本','交易失敗不留下半套資料','知道 atomicity 與 consistency'],out:'資料庫效能與交易實驗報告'},
-{w:12,p:'前端',t:'HTML 與語意結構',g:'理解 browser 顯示介面的最基本結構。',topics:['HTML','form','table'],tasks:['做學生清單頁','建立新增學生 form','不用框架完成語意結構'],pass:['表單可正確送資料','知道 div/form/input/button 的角色','HTML 結構合理'],out:'Mini LMS 靜態頁面'},
-{w:13,p:'前端',t:'CSS Layout',g:'只學夠用的 UI 排版，不陷入視覺細節。',topics:['box model','flex','grid'],tasks:['用 flex 做導覽','用 grid 做課程卡片','讓手機寬度可閱讀'],pass:['能解釋 margin/padding/border','不用 absolute position 硬排主要版面','完成 responsive layout'],out:'Responsive Mini LMS UI'},
-{w:14,p:'前端',t:'JavaScript 與 fetch',g:'讓前端真的與後端交換資料。',topics:['JS','async/await','fetch'],tasks:['fetch /students','用 JS render 列表','表單送 POST 後更新畫面'],pass:['可處理 loading/error/success','知道 Promise 基本概念','不重新整理也能更新資料'],out:'可互動 Full-stack CRUD'},
-{w:15,p:'前端',t:'TypeScript 與型別契約',g:'降低前後端資料結構不一致造成的錯誤。',topics:['TypeScript','interface','type'],tasks:['將核心 JS 改 TypeScript','定義 Student/Course 型別','刻意製造 type error'],pass:['理解 compile-time type checking','能讀懂常見 TS 錯誤','前端 model 與 API schema 對齊'],out:'Typed frontend v1'},
-{w:16,p:'軟體工程',t:'Authentication',g:'建立真正的登入系統並理解密碼不能直接儲存。',topics:['auth','hash','cookie/token'],tasks:['做 register/login/logout','使用 password hashing','研究 session 與 JWT 差異'],pass:['DB 看不到明文密碼','未登入不能取私人資料','能說明 authentication'],out:'Mini LMS 登入系統'},
-{w:17,p:'軟體工程',t:'Authorization 與 RBAC',g:'從「你是誰」進一步處理「你能做什麼」。',topics:['RBAC','role','permission'],tasks:['加入 student/TA/teacher/admin','建立 Permission Matrix','後端逐 endpoint 驗證權限'],pass:['學生直接呼叫 admin API 仍會被拒絕','能分辨 authn/authz','不只靠前端隱藏按鈕'],out:'完整 RBAC Matrix + API enforcement'},
-{w:18,p:'軟體工程',t:'Unit / Integration / E2E Testing',g:'把「我試過好像可以」改成可重複驗證。',topics:['unit','integration','E2E'],tasks:['替 domain logic 做 unit tests','替 DB/API 做 integration tests','寫 3 條核心使用流程'],pass:['權限錯誤有測試','至少有一個失敗案例先寫測試再修','知道三類測試差異'],out:'自動化測試套件'},
-{w:19,p:'軟體工程',t:'Logging 與 Error Handling',g:'讓系統出問題時能查得到原因。',topics:['logging','stack trace','error'],tasks:['移除 bare except','加入 structured logging','統一 API error format'],pass:['錯誤不會靜默消失','log 可追 user/action/status','不把敏感資料寫進 log'],out:'可追查問題的 backend'},
-{w:20,p:'部署',t:'Docker',g:'讓開發環境與部署環境變得可重現。',topics:['image','container','volume'],tasks:['為 FastAPI 寫 Dockerfile','用 compose 啟動 API + PostgreSQL','測試 volume persistence'],pass:['全新環境可一指令啟動','知道 image/container 差異','資料不因 container 刪除而消失'],out:'Dockerized Mini LMS'},
-{w:21,p:'部署',t:'Environment 與 Secrets',g:'把設定與程式碼分離，避免機密進 Git。',topics:['env','secret','config'],tasks:['分 development/staging/production 設定','把 DB 密碼移出程式碼','加入 .gitignore 與 .env.example'],pass:['Git history 沒有 secret','缺少 env 時系統明確報錯','能說明不同環境差異'],out:'安全的設定管理'},
-{w:22,p:'部署',t:'CI/CD 與 GitHub Actions',g:'讓測試與部署不依賴手動記憶。',topics:['CI','GitHub Actions','pipeline'],tasks:['push 時自動 pytest','加入 lint/type check','失敗時阻止後續步驟'],pass:['故意讓測試失敗可看到 CI 紅燈','修好後自動綠燈','能解釋 pipeline 每一步'],out:'第一條 CI pipeline'},
-{w:23,p:'系統架構',t:'Requirement Engineering',g:'開始從 programmer 轉向 architect：先定義問題，再談技術。',topics:['actor','requirement','constraint'],tasks:['替線上作業系統列 actors','寫 functional/non-functional requirements','列出 constraints 與假設'],pass:['需求不混入技術解法','每條需求可驗證','有明確 out-of-scope'],out:'Requirements Specification v1'},
-{w:24,p:'系統架構',t:'C4 Model',g:'用不同層級清楚表達系統邊界與組成。',topics:['Context','Container','C4'],tasks:['畫 System Context','畫 Container Diagram','替每個 container 寫責任'],pass:['圖上沒有不必要程式細節','能說明 system boundary','外部系統與人員清楚'],out:'C4 Context + Container diagrams'},
-{w:25,p:'系統架構',t:'Data Architecture',g:'從整體生命週期思考資料，而不只設 table。',topics:['ownership','lifecycle','retention'],tasks:['重新審查 ER Diagram','標記資料 owner','定義建立/修改/刪除/保存規則'],pass:['知道刪除帳號時各資料怎麼辦','能處理 audit/history 需求','資料責任明確'],out:'Data Architecture v1'},
-{w:26,p:'系統架構',t:'API Architecture',g:'先設計介面契約，再開始 implementation。',topics:['resource','contract','error model'],tasks:['為 course/assignment/submission 設計 API','定義 request/response/errors','替 endpoint 標權限'],pass:['API 命名一致','錯誤模型一致','能從 spec 生成實作任務'],out:'API Specification v1'},
-{w:27,p:'系統架構',t:'Architecture Decision Record',g:'練習最核心的架構能力：清楚記錄取捨。',topics:['ADR','trade-off','decision'],tasks:['寫 PostgreSQL ADR','寫 auth strategy ADR','寫 monolith vs microservices ADR'],pass:['每份都有 context/decision/consequence','列出被拒絕方案','不是只寫「因為比較好」'],out:'至少 5 份 ADR'},
-{w:28,p:'擴充性',t:'Cache',g:'理解效能優化同時會引入一致性問題。',topics:['Redis','TTL','invalidation'],tasks:['找一個真的值得 cache 的查詢','加入 cache 並量測','設計 invalidation'],pass:['能解釋 cache miss/hit','知道 stale data 風險','沒有為了用 Redis 而用 Redis'],out:'Cache experiment + trade-off note'},
-{w:29,p:'擴充性',t:'Queue 與 Background Worker',g:'把耗時工作從同步 request 中拆出去。',topics:['queue','worker','retry'],tasks:['把寄信改 background job','設計 retry 與失敗狀態','模擬 email provider failure'],pass:['使用者不用等寄信完成','重試不造成重複副作用','失敗可追蹤'],out:'非同步 Email pipeline'},
-{w:30,p:'擴充性',t:'Scaling 與 Load Balancer',g:'理解系統從一台機器走向多台機器時的新問題。',topics:['horizontal scale','load balancer','replica'],tasks:['畫單機與多機架構','列出 stateful 問題','研究 DB replication 基本概念'],pass:['分得清 vertical/horizontal scaling','知道 session 放本機的限制','能指出真正 bottleneck'],out:'10 萬使用者 scaling proposal'},
-{w:31,p:'安全',t:'OWASP 與常見 Web 攻擊',g:'把安全從最後檢查，提前成為設計的一部分。',topics:['SQLi','XSS','CSRF','IDOR'],tasks:['在安全測試環境理解 4 類攻擊','審查自己的 API','建立 security checklist'],pass:['前端沒按鈕不等於有權限','SQL 使用 parameterized query','敏感 endpoint 有 server-side check'],out:'Security Review v1'},
-{w:32,p:'安全',t:'Threat Modeling',g:'系統化思考誰會攻擊、攻擊什麼、如何偵測與復原。',topics:['threat','control','mitigation'],tasks:['針對 login/file upload/AI 功能做 threat model','列 impact/likelihood','設 prevention/detection/recovery'],pass:['至少涵蓋 privilege escalation 與 data leakage','control 能對應 threat','知道 residual risk'],out:'Threat Model v1'},
-{w:33,p:'可靠性',t:'Failure、Backup 與 Rollback',g:'假設任何依賴都可能壞掉，設計可恢復的系統。',topics:['timeout','retry','backup','rollback'],tasks:['模擬 DB/email/storage failure','定義 timeout/retry policy','實際做一次 DB backup/restore'],pass:['知道 retry 不一定安全','部署失敗能 rollback','backup 有驗證 restore'],out:'Failure Model + Recovery Runbook'},
-{w:34,p:'AI Native',t:'Specification-Driven Development',g:'把 AI 從聊天助手變成受規格約束的工程執行者。',topics:['spec','acceptance criteria','AI coding'],tasks:['先寫完整 feature spec','禁止 AI 在 spec 前寫 code','用 acceptance criteria 驗收'],pass:['需求、權限、edge cases、tests 都在 spec','AI 產出可追溯到需求','能指出不符合規格之處'],out:'一個由規格驅動完成的功能'},
-{w:35,p:'AI Native',t:'AI Code Review 與 Verification',g:'訓練你成為 AI 程式碼的最終責任人。',topics:['review','security','verification'],tasks:['用第二個 session 做獨立 review','檢查 auth/data integrity/race condition','人工重現至少 2 個問題'],pass:['不是照單全收 AI review','每個修正都有測試','能自己解釋最終 code'],out:'AI-assisted Review Report'},
-{w:36,p:'Capstone',t:'Architect Owner：完整系統設計',g:'把前 35 週能力整合成一份可以交接、實作、驗收的 architecture package。',topics:['architecture','operations','AI orchestration'],tasks:['完成需求/C4/ER/RBAC/API/Threat/Failure/Deployment','補 10 份 ADR','讓 AI agents 依規格實作一個模組'],pass:['能從頭解釋全部架構決策','能指出成本/可靠性/安全取捨','AI 寫錯時能定位與修正'],out:'完整 Learning Platform Architecture Package'}
-];
-
-const phaseOrder=[...new Set(course.map(x=>x.p))];
-const grid=document.querySelector('#roadmapGrid');
-const template=document.querySelector('#weekTemplate');
-const filters=document.querySelector('#phaseFilters');
-const STORAGE='python-ai-architect-progress-v1';
-let completed=new Set(JSON.parse(localStorage.getItem(STORAGE)||'[]'));
-let active='全部';
-
-function renderFilters(){
-  ['全部',...phaseOrder].forEach(name=>{
-    const b=document.createElement('button');b.className='filter-btn'+(name===active?' active':'');b.textContent=name;b.type='button';
-    b.addEventListener('click',()=>{active=name;renderFilters();renderWeeks();});filters.appendChild(b);
-  });
+(function(){
+'use strict';
+const course=window.COURSE, lessons=window.LESSONS, core=window.LEARN_CORE;
+const KEY='python-ai-architect-interactive-v2', OLD='python-ai-architect-progress-v1';
+const $=s=>document.querySelector(s), esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const steps=['概念','範例','實作','驗收','成果'];
+let state=core.blank(), currentWeek=0, currentStep=0, worker=null, runTimer=null, toastTimer=null;
+function warn(msg){$('#storage-warning').hidden=false;$('#storage-warning').textContent=msg;}
+try{
+  const saved=localStorage.getItem(KEY);
+  if(saved)state=core.normalise(JSON.parse(saved),course,lessons);
+  else{
+    const old=JSON.parse(localStorage.getItem(OLD)||'[]');
+    if(Array.isArray(old))for(const w of old)if(Number.isInteger(w)&&w>=1&&w<=36)core.week(state,w,course[w-1],lessons[w]).legacy=true;
+  }
+}catch(e){warn('儲存的進度無法讀取，本次以新進度開始。你仍可匯入之前的備份。');}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch{warn('瀏覽器無法儲存進度。此頁仍可使用，離開前請匯出備份。');}}
+function toast(msg){$('#toast').textContent=msg;$('#toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').hidden=true,4000);}
+function ws(w=currentWeek){return core.week(state,w,course[w-1],lessons[w]);}
+function completed(w){const s=state.weeks[w];return !!s&&core.completed(s,course[w-1],lessons[w]);}
+function countDone(){return course.filter(c=>completed(c.w)).length;}
+function continueWeek(){return course.find(c=>!completed(c.w))?.w||state.lastWeek;}
+function lessonUrl(w,s=0){return '#week/'+w+'/'+s;}
+function codeBlock(code){return `<div class="code-block"><button type="button" class="copy-code">複製</button><pre><code>${esc(code)}</code></pre></div>`;}
+function refs(l){return `<div class="references"><b>延伸閱讀與原始檔案</b><br>${l.refs.map(([label,url])=>`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(label)} ↗</a>`).join('')}</div>`;}
+function list(items){return `<ul>${items.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`;}
+function renderSidebar(){
+  const term=$('#course-search').value.trim().toLowerCase(),phase=$('#phase-select').value;
+  let lastPhase='',html='';
+  const found=course.filter(c=>(!phase||c.p===phase)&&(!term||(c.t+' '+c.p+' '+c.topics.join(' ')).toLowerCase().includes(term)));
+  for(const c of found){
+    if(c.p!==lastPhase){html+=`<div class="phase-heading">${esc(c.p)}</div>`;lastPhase=c.p;}
+    html+=`<a class="lesson-link${currentWeek===c.w?' active':''}" href="${lessonUrl(c.w)}" ${currentWeek===c.w?'aria-current="page"':''}><span class="number">${String(c.w).padStart(2,'0')}</span><span>${esc(c.t)}</span><span class="status" aria-label="${completed(c.w)?'已完成':'未完成'}">${completed(c.w)?'✓':''}</span></a>`;
+  }
+  $('#lesson-list').innerHTML=html||'<p class="empty-state">沒有符合的課程，請調整搜尋。</p>';
+  $('#sidebar-progress').textContent=`${countDone()} / 36 週完成`;
+  $('#total-progress').value=countDone();
 }
-function renderWeeks(){
-  grid.innerHTML='';
-  course.filter(x=>active==='全部'||x.p===active).forEach(item=>{
-    const node=template.content.cloneNode(true);const card=node.querySelector('.week-card');
-    node.querySelector('.week-number').textContent=`WEEK ${String(item.w).padStart(2,'0')}`;
-    node.querySelector('.phase-badge').textContent=item.p;
-    node.querySelector('.week-title').textContent=item.t;
-    node.querySelector('.week-goal').textContent=item.g;
-    item.topics.forEach(v=>{const s=document.createElement('span');s.className='topic';s.textContent=v;node.querySelector('.topic-list').appendChild(s)});
-    item.tasks.forEach(v=>{const li=document.createElement('li');li.textContent=v;node.querySelector('.task-list').appendChild(li)});
-    item.pass.forEach(v=>{const li=document.createElement('li');li.textContent=v;node.querySelector('.check-list').appendChild(li)});
-    node.querySelector('.deliverable').textContent=item.out;
-    const cb=node.querySelector('.week-check');cb.checked=completed.has(item.w);if(cb.checked)card.classList.add('completed');
-    cb.addEventListener('change',e=>{e.target.checked?completed.add(item.w):completed.delete(item.w);localStorage.setItem(STORAGE,JSON.stringify([...completed]));card.classList.toggle('completed',e.target.checked);updateProgress();});
-    grid.appendChild(node);
-  });
+function renderHome(){
+  currentWeek=0;renderSidebar();
+  $('#main').innerHTML=`<section class="home-hero"><span class="section-kicker">LEARN · BUILD · VERIFY</span><h1>從 Python 基礎，<br>走到<span>系統設計。</span></h1><p class="lead">一套 36 週實作教材。每週依序理解概念、拆解範例、動手練習、驗收並留下成果。每週約 8～10 小時，按實際掌握程度調整步調。</p><div class="actions"><a class="btn primary" href="${lessonUrl(continueWeek())}">繼續學習 · Week ${String(continueWeek()).padStart(2,'0')} →</a><a class="btn" href="${lessonUrl(1)}">從第 1 課開始</a></div></section>
+  <div class="stats"><div class="stat"><b>${countDone()} / 36</b><span>週次完成</span></div><div class="stat"><b>${course.reduce((n,c)=>n+lessons[c.w].quiz.length,0)}</b><span>附解釋的驗收題</span></div><div class="stat"><b>3</b><span>瀏覽器 Python 實作課</span></div></div>
+  <details class="setup" open><summary>開始前：建立你的練習環境</summary><p class="muted">已有 Python 基礎即可開始。第 1～3 週可先在頁面練習；檔案、Web、資料庫與部署作業需在自己的電腦實作。</p><ol><li>安裝 Python 3.12 或更新的穩定版本、VS Code 和 Git。Windows 可先用 PowerShell，Week 4 再用 WSL/Ubuntu。</li><li>建立 architect-learning 資料夾，執行 python -m venv .venv。</li><li>啟用環境：macOS/Linux 用 source .venv/bin/activate；PowerShell 用 .venv\\Scripts\\Activate.ps1。若啟用受限制，可直接用 .venv\\Scripts\\python.exe。</li><li>建立 README，執行 git init，每週儲存程式、測試與學習紀錄。</li></ol>${codeBlock('python --version\ngit --version\npython -m venv .venv\n# 啟用環境後：\npython -m pip install pytest\npython -m pytest')}<p class="muted">先不需安裝 Docker、TypeScript 等工具；到了對應課程再安裝。</p></details>
+  <section class="home-section"><h2>每週的五步學習流程</h2><p class="lead">概念 → 範例 → 實作 → 驗收 → 成果。驗收題可重做；實作與成果由你依條件自評，頁面會保留紀錄。</p><div class="callout">進度、草稿與筆記只存在此瀏覽器。Python 首次執行需下載運算環境；其餘教材閱讀不依賴 Python 載入。每週檔案只是起點，完整作業仍需本機實作與測試。</div></section>
+  <section class="home-section"><h2>完整學習路線</h2><div class="course-grid">${course.map(c=>`<a class="course-card" href="${lessonUrl(c.w)}"><span class="section-kicker">WEEK ${String(c.w).padStart(2,'0')} · ${esc(c.p)}</span><h3>${esc(c.t)}</h3><p>${esc(c.g)}</p><span class="card-end">${completed(c.w)?'✓ 已完成 · 再次閱讀':'進入教材 →'}</span></a>`).join('')}</div></section>`;
+  bindCopy();
 }
-function updateProgress(){
-  const n=completed.size,p=Math.round(n/course.length*100);
-  document.querySelector('#progressPercent').textContent=`${p}%`;
-  document.querySelector('#progressText').textContent=`${n} / ${course.length} 週完成`;
-  document.querySelector('#progressRing').style.setProperty('--progress',`${p*3.6}deg`);
+function readView(c,l,s){return `${l.sections.map(([title,text])=>`<section class="concept"><h2>${esc(title)}</h2><p>${esc(text)}</p></section>`).join('')}<div class="callout"><strong>本週目標</strong><br>${esc(c.g)}</div><h3>你要完成</h3>${list(c.tasks)}<label class="check-row"><input type="checkbox" data-step="0" ${s.steps[0]?'checked':''}>我能用自己的話說明本課核心概念</label>${refs(l)}`;}
+function exampleView(c,l,s){return `<h2>先預測結果，再看拆解</h2><p class="muted">範例若包含專案抽象介面或需要先建資料表，請依拆解說明補齊環境。它不一定能作為單一檔案直接執行。</p>${codeBlock(l.example)}<h3>逐步拆解</h3><ol class="walkthrough">${l.walkthrough.map(x=>`<li>${esc(x)}</li>`).join('')}</ol><label class="check-row"><input type="checkbox" data-step="1" ${s.steps[1]?'checked':''}>我已核對範例並能解釋每一步的作用</label>${refs(l)}`;}
+function practiceView(c,l,s){return `<h2>動手做：${c.w<=3?'Python 小練習':'本機實作與設計練習'}</h2><p>${esc(l.prompt)}</p><p class="muted">${c.w<=3?'在下方編輯程式，執行可檢視 print；「執行並測試」會驗證題目規則。測試透過仍需理解程式，不能代替完整作業。':'在自己的電腦完成本題，下方可儲存程式草稿、指令、設計或觀察結果。此處不會執行伺服器、SQL 或 Docker，也不會自動判斷實作品質。'}</p>
+<label class="field-label" for="draft">${c.w<=3?'Python 程式':'實作紀錄 / 草稿'}</label><textarea maxlength="20000" id="draft" class="editor" spellcheck="false" autocapitalize="off" autocomplete="off">${esc(s.draft)}</textarea><p class="editor-status" id="draft-status">草稿會自動儲存${s.testsPassed?' · 上次同份程式已透過測試':''}</p>
+<div class="actions">${c.w<=3?'<button id="run-code" type="button">執行</button><button id="test-code" class="primary" type="button">執行並測試</button><button id="stop-code" type="button" disabled>停止</button>':''}<button id="download-exercise" type="button">下載練習${c.w<=3?'與測試':''}</button><button id="restore-starter" type="button">還原起始草稿</button></div>
+${c.w<=3?'<p class="muted">Python 在背景執行緒執行。首次下載可能需一段時間；運算超時可停止。每次執行是新環境，不儲存 Python 暫存檔案；草稿另由瀏覽器儲存。若載入失敗，可下載到本機執行。</p><pre id="python-output" class="output" role="status" aria-live="polite">尚未執行</pre>':''}
+${l.hints.map((h,i)=>`<details class="hints"><summary>提示 ${i+1} · 需要時再展開</summary><p>${esc(h)}</p></details>`).join('')}
+<details class="hints"><summary>參考解法 / 預期紀錄</summary>${codeBlock(l.solution)}<p class="muted">參考答案不是唯一作法。先自行嘗試，再比較設計與限制。</p></details>
+${c.w<=3?`<label class="check-row"><input id="local-passed" type="checkbox" ${s.localPassed?'checked':''}>我已在本機執行下載的相同測試並透過（自評；載入失敗時可使用）</label>`:''}
+<label class="check-row"><input type="checkbox" data-step="2" ${s.steps[2]?'checked':''}>${c.w<=3?'我已透過測試並能解釋實作':'我已在本機完成實作，核對預期並留下紀錄（自評）'}</label>`;}
+function quizView(c,l,s){return `<h2>檢查是否理解</h2><p class="muted">全部答對才符合本週的概念驗收條件。可修改答案後重做；題目判分不等同完整專案驗收。</p><form id="quiz-form">${l.quiz.map((q,i)=>`<fieldset class="quiz-question"><legend>${i+1}. ${esc(q.prompt)}</legend>${q.options.map((o,j)=>`<label class="quiz-option"><input type="radio" name="q${i}" value="${j}" ${s.answers[i]===j?'checked':''} required>${esc(o)}</label>`).join('')}${s.graded?`<div class="feedback ${s.answers[i]===q.answer?'correct':'wrong'}"><b>${s.answers[i]===q.answer?'✓ 正確':'再想一想 · 正確答案：'+esc(q.options[q.answer])}</b>${esc(q.explanation)}</div>`:''}</fieldset>`).join('')}<button class="primary" type="submit">檢查答案</button>${s.graded?`<p class="result-line" role="status">${core.quizScore(s,l)} / ${l.quiz.length} 題正確${core.quizScore(s,l)===l.quiz.length?' · 概念驗收透過':' · 修改後可再次檢查'}</p>`:''}</form>`;}
+function projectView(c,l,s){const eligible=core.eligible(s,c,l);return `<h2>把本週成果留下來</h2><div class="callout"><strong>本週產出</strong><br>${esc(c.out)}</div><h3>完整作業</h3>${list(c.tasks)}<label class="field-label" for="project">成果紀錄：檔案 / commit / 測試結果 / 決策與限制</label><textarea maxlength="20000" id="project" placeholder="記錄你做了什麼、如何驗證、遇到的問題與尚未完成專案。">${esc(s.project)}</textarea><p class="muted">這是個人學習紀錄，不會自動上傳 GitHub。請勿貼入密碼、token 或真實私人資料。</p><h3>成果驗收（自評）</h3>${c.pass.map((v,i)=>`<label class="check-row"><input type="checkbox" data-rubric="${i}" ${s.rubric[i]?'checked':''}>${esc(v)}</label>`).join('')}
+<div class="completion"><h3>${completed(c.w)?'✓ 本週已標記完成':'完成前的檢查'}</h3><ul><li>${s.steps[0]?'✓':'○'} 概念已確認</li><li>${s.steps[1]?'✓':'○'} 範例已確認</li><li>${s.steps[2]?'✓':'○'} 實作已驗證與自評</li><li>${s.graded&&core.quizScore(s,l)===l.quiz.length?'✓':'○'} 概念驗收全部答對</li><li>${s.rubric.every(Boolean)&&s.project.trim()?'✓':'○'} 成果紀錄與全部自評條件已完成</li></ul>${s.legacy?'<p>這週保留了舊版手動完成記錄。新教材各步仍可重新完成。</p>':''}<p>自評表示你確認已完成實作；網站沒有審查你的完整專案。</p><button id="complete-week" type="button" ${eligible?'':'disabled'}>${s.done?'已完成本週':'標記完成本週'}</button></div>${c.w<36?`<a class="btn primary" href="${lessonUrl(c.w+1)}">進入 Week ${String(c.w+1).padStart(2,'0')} →</a>`:'<a class="btn" href="#home">回到課程總覽</a>'}`;}
+function renderLesson(w,step,focus=false){
+  stopRun(false);currentWeek=w;currentStep=step;state.lastWeek=w;
+  const c=course[w-1],l=lessons[w],s=ws(w);save();renderSidebar();
+  document.title=`Week ${String(w).padStart(2,'0')} · ${c.t}｜互動教材`;
+  const views=[readView,exampleView,practiceView,quizView,projectView];
+  $('#main').innerHTML=`<header class="lesson-header"><span class="section-kicker">WEEK ${String(w).padStart(2,'0')} · ${esc(c.p)}</span><h1>${esc(c.t)}</h1><p class="lead">${esc(c.g)}</p><div class="meta"><span>建議 8～10 小時 / 週</span><span>${w<=3?'可在瀏覽器練習 Python':'含本機實作'}</span>${completed(w)?'<span class="badge">✓ 已完成</span>':''}</div></header>
+<nav class="step-tabs" aria-label="學習步驟">${steps.map((label,i)=>`<a class="${i===step?'active':''}" href="${lessonUrl(w,i)}" ${i===step?'aria-current="step"':''}><small>0${i+1} ${(i<3&&s.steps[i])||(i===3&&s.graded&&core.quizScore(s,l)===l.quiz.length)||(i===4&&completed(w))?'✓':''}</small>${label}</a>`).join('')}</nav>
+<article class="lesson-body">${views[step](c,l,s)}<details class="notes-area"><summary>我的學習筆記 · 自動儲存</summary><label class="sr-only" for="notes">本週學習筆記</label><textarea maxlength="20000" id="notes" placeholder="用自己的話解釋概念，留下卡住的地方與修正方法。">${esc(s.notes)}</textarea></details><div class="step-bottom"><a class="btn" href="${step>0?lessonUrl(w,step-1):w>1?lessonUrl(w-1,4):'#home'}">← ${step>0?'上一步':w>1?'上一週':'總覽'}</a>${step<4?`<a class="btn primary" href="${lessonUrl(w,step+1)}">下一步：${steps[step+1]} →</a>`:''}</div></article>`;
+  $('#notes').value=s.notes;if($('#draft'))$('#draft').value=s.draft;if($('#project'))$('#project').value=s.project;
+  bindLesson(c,l,s);bindCopy();
+  if(focus){$('#main').focus({preventScroll:true});window.scrollTo({top:0,behavior:'instant'});}
 }
-document.querySelector('#resetProgress').addEventListener('click',()=>{if(confirm('確定要清除所有完成進度嗎？')){completed.clear();localStorage.removeItem(STORAGE);renderWeeks();updateProgress();}});
-renderFilters();renderWeeks();updateProgress();
+function invalidate(s){s.done=false;}
+function bindLesson(c,l,s){
+  $('#notes').addEventListener('input',e=>{s.notes=e.target.value;save();});
+  document.querySelectorAll('[data-step]').forEach(input=>input.addEventListener('change',()=>{
+    const n=Number(input.dataset.step);
+    if(n===2&&input.checked&&c.w<=3&&!s.testsPassed&&!s.localPassed){input.checked=false;toast('先透過頁面測試，或完成本機相同測試再勾選。');return;}
+    if(n===2&&input.checked&&c.w>3&&!s.draft.trim()){input.checked=false;toast('先留下實作紀錄。');return;}
+    s.steps[n]=input.checked;invalidate(s);save();renderSidebar();
+  }));
+  if(currentStep===2){
+    $('#draft').addEventListener('input',e=>{s.draft=e.target.value;s.testsPassed=false;s.localPassed=false;s.steps[2]=false;invalidate(s);save();$('#draft-status').textContent='草稿已儲存 · 修改後需重新驗證';const check=document.querySelector('[data-step="2"]');check.checked=false;if($('#local-passed'))$('#local-passed').checked=false;renderSidebar();});
+    $('#draft').addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();const el=e.target,start=el.selectionStart,end=el.selectionEnd;el.setRangeText('    ',start,end,'end');el.dispatchEvent(new Event('input',{bubbles:true}));}});
+    $('#restore-starter').addEventListener('click',()=>{if(confirm('還原本課起始草稿？目前草稿會被取代，筆記保留。')){s.draft=l.starter;s.testsPassed=false;s.localPassed=false;s.steps[2]=false;invalidate(s);save();renderLesson(c.w,2);}});
+    $('#download-exercise').addEventListener('click',()=>download(`week${String(c.w).padStart(2,'0')}.${c.w<=3?'py':'md'}`,c.w<=3?s.draft+'\n\n# 課程驗收測試\n'+l.tests+'\nprint("全部測試透過")\n':l.prompt+'\n\n'+s.draft,'text/plain'));
+    if(c.w<=3){
+      $('#run-code').addEventListener('click',()=>runPython(c,l,s,false));$('#test-code').addEventListener('click',()=>runPython(c,l,s,true));$('#stop-code').addEventListener('click',()=>stopRun(true));
+      $('#local-passed').addEventListener('change',e=>{s.localPassed=e.target.checked;if(!s.localPassed&&!s.testsPassed){s.steps[2]=false;document.querySelector('[data-step="2"]').checked=false;invalidate(s);}save();});
+    }
+  }
+  if(currentStep===3){
+    $('#quiz-form').addEventListener('change',e=>{if(e.target.type==='radio'){const i=Number(e.target.name.slice(1));s.answers[i]=Number(e.target.value);s.graded=false;invalidate(s);save();document.querySelectorAll('.feedback,.result-line').forEach(el=>el.remove());renderSidebar();}});
+    $('#quiz-form').addEventListener('submit',e=>{e.preventDefault();s.graded=true;invalidate(s);save();renderLesson(c.w,3);});
+  }
+  if(currentStep===4){
+    function refresh(){invalidate(s);save();renderSidebar();$('#complete-week').disabled=!core.eligible(s,c,l);$('#complete-week').textContent='標記完成本週';document.querySelector('.completion h3').textContent=s.legacy?'✓ 保留舊版完成記錄':'完成前的檢查';const status=document.querySelector('.completion li:last-child');status.textContent=(s.rubric.every(Boolean)&&s.project.trim()?'✓':'○')+' 成果紀錄與全部自評條件已完成';}
+    $('#project').addEventListener('input',e=>{s.project=e.target.value;refresh();});
+    document.querySelectorAll('[data-rubric]').forEach(input=>input.addEventListener('change',()=>{s.rubric[Number(input.dataset.rubric)]=input.checked;refresh();renderLesson(c.w,4);}));
+    $('#complete-week').addEventListener('click',()=>{if(!core.eligible(s,c,l))return;s.done=true;s.legacy=false;save();renderLesson(c.w,4);toast('本週已完成。進度與成果紀錄已儲存。');});
+  }
+}
+function bindCopy(){document.querySelectorAll('.copy-code').forEach(b=>b.addEventListener('click',async()=>{const text=b.parentNode.querySelector('code').textContent;try{await navigator.clipboard.writeText(text);b.textContent='已複製';setTimeout(()=>b.textContent='複製',1500);}catch{toast('無法存取剪貼簿，請選取程式碼後手動複製。');}}));}
+function stopRun(visible){if(worker){worker.terminate();worker=null;}clearTimeout(runTimer);if($('#run-code')){$('#run-code').disabled=false;$('#test-code').disabled=false;$('#stop-code').disabled=true;}if(visible&&$('#python-output'))$('#python-output').textContent='已停止執行。草稿仍保留。';}
+function runPython(c,l,s,test){
+  stopRun(false);
+  if(test){s.testsPassed=false;s.steps[2]=false;invalidate(s);save();document.querySelector('[data-step="2"]').checked=false;}
+  const output=$('#python-output'),code=s.draft;
+  output.textContent='正在載入 Python 環境…首次執行需要下載。';
+  $('#run-code').disabled=true;$('#test-code').disabled=true;$('#stop-code').disabled=false;
+  try{worker=new Worker('python-worker.js',{type:'module'});}catch(e){output.textContent='無法建立 Python 執行環境。請下載練習到本機執行。\n'+e.message;stopRun(false);return;}
+  const localWorker=worker;
+  const failed=msg=>{if(worker!==localWorker)return;output.textContent=msg;stopRun(false);};
+  runTimer=setTimeout(()=>failed('Python 環境載入超時。可重試，或下載練習到本機執行。'),60000);
+  worker.onerror=()=>failed('Python 環境無法載入。請檢查網路/CDN 存取，或下載練習到本機執行。');
+  worker.onmessage=({data})=>{
+    if(worker!==localWorker)return;
+    if(data.type==='ready'){clearTimeout(runTimer);output.textContent='Python 已載入，正在執行…';runTimer=setTimeout(()=>failed('程式執行超時，已停止。檢查是否有無限迴圈；草稿保留。'),10000);}
+    if(data.type==='result'){
+      output.textContent=data.output+'\n\n'+(data.ok?(test?'✓ 全部題目測試透過':'✓ 程式執行完成'):'✕ 執行或測試失敗，請閱讀上方錯誤');
+      if(s.draft!==code)output.textContent+='\n注意：草稿已修改，此次結果屬於修改前的程式。';
+      if(test&&data.ok&&s.draft===code){s.testsPassed=true;save();$('#draft-status').textContent='草稿已儲存 · 這份程式已透過題目測試';}
+      stopRun(false);
+    }
+  };
+  worker.postMessage({code,tests:test?l.tests:''});
+}
+function download(name,text,type){const url=URL.createObjectURL(new Blob([text],{type}));const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+function route(){
+  const m=location.hash.match(/^#week\/(\d+)\/(\d+)$/);
+  if(m){const w=Number(m[1]),step=Number(m[2]);if(w>=1&&w<=36&&step>=0&&step<=4){renderLesson(w,step,true);return;}}
+  stopRun(false);renderHome();document.title='Python → AI Architect｜互動教材';
+}
+[...new Set(course.map(c=>c.p))].forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;$('#phase-select').appendChild(o);});
+$('#course-search').addEventListener('input',renderSidebar);$('#phase-select').addEventListener('change',renderSidebar);
+$('#continue-top').addEventListener('click',()=>location.hash=lessonUrl(state.lastWeek||continueWeek()));
+$('#export-progress').addEventListener('click',()=>download('python-ai-learning-progress.json',JSON.stringify(state,null,2),'application/json'));
+$('#import-progress').addEventListener('change',async e=>{
+  const file=e.target.files[0];if(!file)return;
+  try{if(file.size>8000000)throw new Error('進度檔過大');const imported=core.normalise(JSON.parse(await file.text()),course,lessons);if(confirm('使用備份取代此瀏覽器的進度與草稿？建議先匯出目前進度。')){stopRun(false);state=imported;save();route();toast('進度已匯入。');}}catch(err){toast('匯入失敗：'+err.message);}finally{e.target.value='';}
+});
+$('#reset-progress').addEventListener('click',()=>{if(confirm('清除所有週次進度、草稿與筆記？需要保留時請先匯出。')){stopRun(false);state=core.blank();try{localStorage.removeItem(OLD);}catch{}save();location.hash='#home';route();toast('進度已重設。');}});
+window.addEventListener('hashchange',route);route();
+})();

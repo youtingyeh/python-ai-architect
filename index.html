@@ -1,129 +1,33 @@
 <!doctype html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="從 Python 基礎一路走到 AI-native system architect 的 36 週實作課程。" />
-  <title>Python → AI Architect Roadmap</title>
-  <link rel="stylesheet" href="styles.css" />
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="從 Python 基礎到系統設計的 36 週互動教材：解說、範例、Python 練習、驗收與學習筆記。">
+<meta name="theme-color" content="#f4f1ea">
+<title>Python → AI Architect｜互動教材</title>
+<link rel="stylesheet" href="styles.css">
+<script defer src="course.js"></script><script defer src="lessons.js"></script>
+<script defer src="progress.js"></script><script defer src="app.js"></script>
 </head>
 <body>
-  <header class="topbar">
-    <a class="brand" href="#top" aria-label="回到首頁">
-      <span class="brand-mark">A</span>
-      <span>Python → AI Architect</span>
-    </a>
-    <nav>
-      <a href="#roadmap">學習路線</a>
-      <a href="#rules">學習規則</a>
-      <a href="#final-project">最終專案</a>
-    </nav>
-  </header>
-
-  <main id="top">
-    <section class="hero">
-      <div class="hero-copy">
-        <p class="eyebrow">36 週 · 每週 8–10 小時 · 從 Python 基礎開始</p>
-        <h1>從「會寫程式」走到<br><span>能設計完整系統</span></h1>
-        <p class="hero-lead">這不是 Prompt 工程課。目標是讓你能把需求拆成資料、API、權限、架構、安全、部署與驗收，再讓 AI 幫你實作。</p>
-        <div class="hero-actions">
-          <a class="btn primary" href="#roadmap">開始第 1 週</a>
-          <a class="btn ghost" href="https://github.com/youtingyeh/-Python-AI-" target="_blank" rel="noreferrer">GitHub 專案</a>
-        </div>
-      </div>
-      <aside class="hero-card" aria-label="最終能力">
-        <div class="card-label">36 週後你要能做到</div>
-        <ol class="capability-flow">
-          <li>需求分析</li><li>資料模型</li><li>API 設計</li><li>權限模型</li><li>系統架構</li><li>安全與測試</li><li>部署與監控</li><li>AI 協作實作</li>
-        </ol>
-      </aside>
-    </section>
-
-    <section class="dashboard section-wrap" aria-labelledby="progress-title">
-      <div>
-        <p class="section-kicker">Progress</p>
-        <h2 id="progress-title">你的學習進度</h2>
-      </div>
-      <div class="progress-panel">
-        <div class="progress-ring" id="progressRing"><span id="progressPercent">0%</span></div>
-        <div>
-          <strong id="progressText">0 / 36 週完成</strong>
-          <p>勾選每週「完成本週」後，進度會保存在這台瀏覽器。</p>
-          <button class="text-button" id="resetProgress" type="button">重設進度</button>
-        </div>
-      </div>
-    </section>
-
-    <section id="rules" class="section-wrap split-section">
-      <div>
-        <p class="section-kicker">Learning Rules</p>
-        <h2>AI 可以幫你寫，但不能替你理解</h2>
-      </div>
-      <div class="rule-grid">
-        <article><span>01</span><h3>先理解</h3><p>先搞懂概念，再讓 AI 幫你補速度。</p></article>
-        <article><span>02</span><h3>先設計</h3><p>需求、資料、API 與權限先畫出來，再 coding。</p></article>
-        <article><span>03</span><h3>自己驗證</h3><p>每段 AI 程式碼都必須能解釋、測試、修改。</p></article>
-        <article><span>04</span><h3>留下決策</h3><p>用 README 與 ADR 記錄為什麼這樣設計。</p></article>
-      </div>
-    </section>
-
-    <section id="roadmap" class="section-wrap roadmap-section">
-      <div class="section-heading-row">
-        <div>
-          <p class="section-kicker">Roadmap</p>
-          <h2>36 週學習路線</h2>
-        </div>
-        <div class="filters" id="phaseFilters" aria-label="課程階段篩選"></div>
-      </div>
-      <div class="roadmap-grid" id="roadmapGrid" aria-live="polite"></div>
-    </section>
-
-    <section id="final-project" class="section-wrap final-project">
-      <div class="final-copy">
-        <p class="section-kicker">Capstone</p>
-        <h2>最終專案：設計一套完整學習平台</h2>
-        <p>最後不以「畫面做得漂亮」作為主要成果，而是交出完整的 architecture package。</p>
-      </div>
-      <div class="deliverables">
-        <div><b>01</b><span>Requirements</span></div>
-        <div><b>02</b><span>C4 Context / Container</span></div>
-        <div><b>03</b><span>ER Diagram</span></div>
-        <div><b>04</b><span>RBAC Matrix</span></div>
-        <div><b>05</b><span>API Specification</span></div>
-        <div><b>06</b><span>Threat Model</span></div>
-        <div><b>07</b><span>Failure Model</span></div>
-        <div><b>08</b><span>Deployment Architecture</span></div>
-        <div><b>09</b><span>Tests & Monitoring</span></div>
-        <div><b>10</b><span>Architecture Decision Records</span></div>
-      </div>
-    </section>
-  </main>
-
-  <footer>
-    <p>Python → AI Architect Roadmap</p>
-    <p>核心原則：能解釋、能驗證、能做取捨。</p>
-  </footer>
-
-  <template id="weekTemplate">
-    <article class="week-card">
-      <div class="week-card-top">
-        <div><span class="week-number"></span><span class="phase-badge"></span></div>
-        <label class="complete-control"><input type="checkbox" class="week-check" /><span>完成本週</span></label>
-      </div>
-      <h3 class="week-title"></h3>
-      <p class="week-goal"></p>
-      <div class="topic-list"></div>
-      <details>
-        <summary>查看本週任務與驗收</summary>
-        <div class="details-body">
-          <h4>本週要做</h4><ul class="task-list"></ul>
-          <h4>過關條件</h4><ul class="check-list"></ul>
-          <h4>本週產出</h4><p class="deliverable"></p>
-        </div>
-      </details>
-    </article>
-  </template>
-
-  <script src="app.js"></script>
-</body>
-</html>
+<a class="skip-link" href="#main">跳到教材</a>
+<header class="topbar">
+<a class="brand" href="#home"><span class="brand-mark">A</span><span>Python → AI Architect<small>從理解到實作</small></span></a>
+<nav aria-label="主導覽"><a href="#home">課程總覽</a><button id="continue-top" class="text-button" type="button">繼續學習 →</button><a href="https://github.com/youtingyeh/-Python-AI-" target="_blank" rel="noopener noreferrer">GitHub ↗</a></nav>
+</header>
+<div id="storage-warning" class="warning" role="status" hidden></div>
+<div class="layout">
+<aside class="sidebar" aria-label="課程目錄">
+<div class="sidebar-top"><span class="section-kicker">36 WEEK COURSE</span><h2>學習目錄</h2><p id="sidebar-progress">0 / 36 週完成</p><progress id="total-progress" max="36" value="0" aria-label="課程完成進度"></progress></div>
+<label class="sr-only" for="course-search">搜尋課程</label><input id="course-search" type="search" placeholder="搜尋：Python、許可權、部署…">
+<label class="sr-only" for="phase-select">選擇課程階段</label><select id="phase-select"><option value="">全部階段</option></select>
+<nav id="lesson-list" aria-label="週次列表"></nav>
+<div class="sidebar-tools"><button id="export-progress" type="button">匯出進度</button><label class="import-label">匯入進度<input id="import-progress" type="file" accept="application/json,.json" class="sr-only"></label><button id="reset-progress" type="button">重設</button></div>
+<p class="local-note">進度存在這臺瀏覽器。換裝置前先匯出；不會自動同步至 GitHub。</p>
+</aside>
+<main id="main" tabindex="-1"></main>
+</div>
+<footer>能解釋、能驗證、能說明取捨。<span>Python → Web → Data → Architecture</span></footer>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<noscript><p class="warning">互動教材需要啟用 JavaScript。</p></noscript>
+</body></html>
