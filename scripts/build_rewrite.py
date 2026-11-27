@@ -7,7 +7,7 @@ gloss=[];seen=set()
 byid={l['id']:l for l in L}
 for f in sorted(glob.glob(f'{root}/rewrite/*.txt')):
     lid=os.path.basename(f)[:-4];txt=open(f,encoding='utf8').read()
-    blocks=re.split(r'^@(\w+)[ \t]*(.*)$',txt,flags=re.M)
+    blocks=re.split(r'^@(section|term)[ \t]*(.*)$',txt,flags=re.M)
     secs=[]
     for i in range(1,len(blocks),3):
         k,a,b=blocks[i],blocks[i+1].strip(),re.sub(r'\n{3,}','\n\n',blocks[i+2].strip())
