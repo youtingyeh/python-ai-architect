@@ -7,7 +7,7 @@ test('published static package includes every study dependency, glossary is clea
 test('corrected teaching examples execute and reject security counterexamples',()=>{const py=String.raw`
 import json,contextlib,io,ast
 s=open('study-data.js',encoding='utf8').read();D={l['id']:l for l in json.loads(s[s.index('['):s.rindex(']')+1])}
-for id in ['w27','ext-harness','ms-lesson-08','w34','ms-lesson-13','ms-lesson-15','ms-lesson-16','ms-lesson-06','w19','ext-post-training','ext-multimodal','ext-mcp','ext-self-improving']:
+for id in ['w27','ext-harness','ms-lesson-08','w34','ms-lesson-13','ms-lesson-15','ms-lesson-16','ms-lesson-06','w19','ext-post-training','ext-multimodal','ext-mcp','ext-self-improving','w37','w38','w39','w40','w41','w42']:
  ns={}
  with contextlib.redirect_stdout(io.StringIO()):exec(D[id]['example']+'\n'+D[id]['solution'],ns)
  if id=='w34':
