@@ -181,3 +181,5 @@ summary{cursor:pointer}
 .math-inline sup,.math-block sup{font-size:.68em;vertical-align:.75em;line-height:0;margin-left:1px}
 .math-inline sub .mtext,.math-block sub .mtext,.math-inline sup .mtext,.math-block sup .mtext{font-size:1em}
 .math-inline sub sub,.math-inline sup sup,.math-block sub sub,.math-block sup sup{font-size:.85em}
+
+.moverline{text-decoration:overline}.math-error{color:#9b2020;background:#fff0f0}.code-notice{border-left:4px solid #b17716;padding:14px;background:#fff7e8}

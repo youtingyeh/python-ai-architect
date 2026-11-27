@@ -1,4 +1,4 @@
-import json,glob,os,re
+import json,glob,os,re,hashlib
 import pathlib
 root=str(pathlib.Path(__file__).resolve().parent.parent)
 s=open(f'{root}/scripts/study-data.orig.js',encoding='utf8').read()
@@ -17,6 +17,8 @@ for f in sorted(glob.glob(f'{root}/rewrite/*.txt')):
         else: raise SystemExit(f'{lid}: bad block {k}')
     assert len(secs)>=5,(lid,len(secs))
     byid[lid]['sections']=secs
+for l in L:
+    l["quizVersion"] = hashlib.sha256(json.dumps(l["quiz"], ensure_ascii=False, sort_keys=True).encode()).hexdigest()[:16]
 for i,l in enumerate(L):
     deep=sum(len(h)+len(p) for h,p in l['sections'])+len(''.join(l['walkthrough']))
     mark='REWRITTEN' if os.path.exists(f"{root}/rewrite/{l['id']}.txt") else ''

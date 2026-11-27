@@ -31,12 +31,16 @@ jobs:
           python-version: '3.12'
       - name: Install test dependencies
         run: npm ci
+      - name: Check generated teaching data
+        run: |
+          python scripts/build_rewrite.py
+          git diff --exit-code -- study-data.js glossary.js
       - name: Validate lessons and learning interactions
         run: npm test
       - name: Package static course
         run: |
           mkdir -p _site
-          cp study.html study.js study-data.js route.html route.js route.css route-data.js genai.html genai.js index.html styles.css app.js course.js lessons.js progress.js python-worker.js _site/
+          cp study.html study.js study-data.js glossary.js route.html route.js route.css route-data.js genai.html genai.js index.html styles.css app.js course.js lessons.js progress.js python-worker.js _site/
       - name: Upload course for download
         uses: actions/upload-artifact@v4
         with:

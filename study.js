@@ -11,7 +11,7 @@ const SYMBOLS={
   '\\cdot':'·','\\cdots':'⋯','\\dots':'…','\\to':'→','\\rightarrow':'→',
   '\\leftarrow':'←','\\mid':'∣','\\circ':'°','\\quad':' ',
   '\\sum':'∑','\\prod':'∏','\\log':'log','\\exp':'exp','\\max':'max',
-  '\\min':'min','\\arg':'arg'
+  '\\min':'min','\\arg':'arg','\\div':'÷','\\top':'⊤','\\ln':'ln','\\tanh':'tanh','\\cos':'cos','\\ldots':'…'
 };
 function replaceBraced(s,cmd,fn){
   const tok=cmd+'{';let idx=s.indexOf(tok);
@@ -47,7 +47,7 @@ function renderMath(tex){
   let s=tex.trim();
   s=s.replace(/\\begin\{cases\}([\s\S]*?)\\end\{cases\}/g,(_,body)=>{
     const rows=body.split(/\\\\/).map(r=>r.trim()).filter(Boolean).map(r=>{
-      const parts=r.split('&').map(p=>renderMath(p.trim()));
+      const parts=r.split(/&amp;|&/).map(p=>renderMath(p.trim()));
       return `<span class="mcase-row">${parts.join('<span class="mcase-sep">，</span>')}</span>`;
     }).join('');
     return `<span class="mcases"><span class="mcases-brace">{</span><span class="mcases-body">${rows}</span></span>`;
@@ -61,13 +61,15 @@ function renderMath(tex){
   s=replaceBraced(s,'\\mathcal',inner=>({O:'𝒪',N:'𝒩',I:'ℐ',L:'ℒ'}[inner]||`<i>${inner}</i>`));
   s=replaceBraced(s,'\\hat',inner=>`${renderMath(inner)}&#770;`);
   s=replaceBraced(s,'\\sqrt',inner=>`<span class="msqrt">&radic;<span class="mrad">${renderMath(inner)}</span></span>`);
+  s=replaceBraced(s,'\\bar',inner=>`<span class="moverline">${renderMath(inner)}</span>`);
   s=replaceFrac(s);
+  s=s.replace(/\\top\b/g,'⊤');
   s=s.replace(/\\hat\s*([a-zA-Z0-9])/g,'$1&#770;');
   s=replaceBraced(s,'_',inner=>`<sub>${renderMath(inner)}</sub>`);
   s=replaceBraced(s,'^',inner=>`<sup>${renderMath(inner)}</sup>`);
   s=s.replace(/_([a-zA-Z0-9+\-])/g,'<sub>$1</sub>');
-  s=s.replace(/\^([a-zA-Z0-9+\-′']+)/g,'<sup>$1</sup>');
-  s=s.replace(/\\[a-zA-Z]+/g,cmd=>SYMBOLS[cmd]||cmd.slice(1));
+  s=s.replace(/\^([a-zA-Z0-9⊤+\-′']+)/g,'<sup>$1</sup>');
+  s=s.replace(/\\[a-zA-Z]+/g,cmd=>SYMBOLS[cmd]||`<span class="math-error" title="未支援的公式命令">${cmd}</span>`);
   return s;
 }
 function fmt(raw){
@@ -87,16 +89,16 @@ function clean(raw){
   const out={last:lessons.some(l=>l.id===raw.last)?raw.last:lessons[0].id,lessons:{}};
   for(const l of lessons){
     const r=raw.lessons[l.id];
-    if(r)out.lessons[l.id]={answers:l.quiz.map((q,i)=>Number.isInteger(r.answers?.[i])&&r.answers[i]>=0&&r.answers[i]<q.options.length?r.answers[i]:null),graded:r.graded===true};
+    if(r)out.lessons[l.id]={quizVersion:l.quizVersion,bookmark:Number.isInteger(r.bookmark)&&r.bookmark>=0&&r.bookmark<l.sections.length?r.bookmark:0,answers:l.quiz.map((q,i)=>r.quizVersion===l.quizVersion&&Number.isInteger(r.answers?.[i])&&r.answers[i]>=0&&r.answers[i]<q.options.length?r.answers[i]:null),graded:r.quizVersion===l.quizVersion&&r.graded===true};
   }
   return out;
 }
-try{const s=localStorage.getItem(KEY);if(s)state=clean(JSON.parse(s));}catch{message('進度無法讀取，可匯入備份。');}
+try{const s=localStorage.getItem(KEY);if(s){const raw=JSON.parse(s);if(Object.values(raw.lessons||{}).some(r=>!r.quizVersion)){try{localStorage.setItem(KEY+'-before-20261127-fix',s);}catch{}message('題目已修訂；舊成績已另存備份，修訂題目需重新驗收。');}state=clean(raw);}}catch{message('進度無法讀取，可匯入備份。');}
 function save(){try{localStorage.setItem(KEY,JSON.stringify({version:1,...state}));}catch{message('無法儲存，離開前請匯出。');}}
 function record(l){
   const r=state.lessons[l.id];
   if(!r||!Array.isArray(r.answers)||r.answers.length!==l.quiz.length){
-    state.lessons[l.id]={answers:l.quiz.map((_,i)=>Number.isInteger(r?.answers?.[i])?r.answers[i]:null),graded:false};
+    state.lessons[l.id]={answers:l.quiz.map(()=>null),graded:false,quizVersion:l.quizVersion,bookmark:0};
   }
   return state.lessons[l.id];
 }
@@ -145,8 +147,9 @@ function readingStats(l){
   const quiz=l.quiz.reduce((n,q)=>n+String(q.prompt).length+q.options.join('').length+String(q.explanation).length,0);
   const codeLines=((l.example||'')+'\n'+(l.solution||'')).split('\n').filter(x=>x.trim()).length;
   // 初學者閱讀速度：白話文約每分鐘 350 字、技術文約每分鐘 250 字、程式碼約每分鐘 12 行
-  const min=Math.round(deep/300+codeLines/12);
-  return {deep,quiz,codeLines,min,text:deep};
+  const min=Math.round(l.sections.reduce((n,[h,p])=>n+h.length+p.length,0)/300);
+  const optionalMin=Math.round((l.walkthrough||[]).join('').length/300+codeLines/12);
+  return {deep,quiz,codeLines,min,optionalMin,text:l.sections.reduce((n,[h,p])=>n+h.length+p.length,0)};
 }
 let pop;
 function hidePop(){if(pop)pop.hidden=true;}
@@ -206,7 +209,7 @@ function show(id){
   const badgeText=eng?'後續工程延伸（Python／網站／架構）':'AI 核心學習主線';
   const badgeClass=eng?'track-badge eng':'track-badge ai';
   const toc=`<nav class="lesson-toc" aria-label="本章小節導覽">
-    <strong>本章學習導覽 · 預估閱讀約 ${st.min} 分鐘（文字 ${st.text.toLocaleString()} 字${st.codeLines?` · 程式碼 ${st.codeLines} 行`:''}）</strong>
+    <strong>本章學習導覽 · 正文預估約 ${st.min} 分鐘，選讀程式與拆解另約 ${st.optionalMin} 分鐘（文字 ${st.text.toLocaleString()} 字${st.codeLines?` · 程式碼 ${st.codeLines} 行`:''}）</strong>
     <ol>
       ${l.sections.map(([h],k)=>`<li><a href="#" data-sec="${k}">${fmt(h)}</a></li>`).join('')}
       ${l.example?'<li>程式碼／量化案例與逐步拆解</li>':''}
@@ -222,9 +225,11 @@ function show(id){
       </div>
       <h2>${esc(l.title)}</h2>
       ${toc}
+      <button id="reading-bookmark" type="button">回到本課上次段落</button>
     </div>
     ${GLOSS.size?'<p class="term-tip">💡 文中有<span class="term-demo">虛線底線</span>的詞，點一下可以看白話解釋。</p>':''}
-    ${l.sections.map(([h,p],k)=>`<section class="lesson-section" id="sec-${k}"><h3>${fmt(h)}</h3><div class="lesson-prose">${termify(fmt(p),used)}</div></section>`).join('')}
+    ${l.sections.map(([h,p],k)=>`<section class="lesson-section" id="sec-${k}"><h3>${fmt(h)}</h3><div class="lesson-prose">${termify(fmt(p),used)}</div><button type="button" data-bookmark="${k}">記錄讀到這裡</button></section>`).join('')}
+    ${l.codeNotice?`<p class="code-notice">範例限制：${esc(l.codeNotice)}</p>`:''}
     ${l.example?`<section class="lesson-section example-box"><h3>範例與逐步解說</h3><p class="section-hint">請先閱讀下方範例並思考每一段的輸入、狀態變化與輸出，再逐條核對下方的拆解說明：</p><pre><code>${esc(l.example)}</code></pre><h4>逐步拆解與關鍵細節</h4><ol class="walkthrough-list">${l.walkthrough.map(t=>'<li>'+fmt(t)+'</li>').join('')}</ol></section>`:''}
     ${l.solution?`<details class="solution-box" open><summary>進一步看完整解法與進階實作範本（不用提交作業）</summary><pre><code>${esc(l.solution)}</code></pre></details>`:''}
     <section class="quiz-cta">
@@ -241,6 +246,8 @@ function show(id){
       <div class="ref-links">${l.refs.map(([n,u])=>`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(n)} ↗</a>`).join('')}</div>
     </details>`;
   document.querySelectorAll('[data-sec]').forEach(a=>a.onclick=e=>{e.preventDefault();document.getElementById('sec-'+a.dataset.sec)?.scrollIntoView?.({behavior:'smooth'});});
+  document.querySelectorAll('[data-bookmark]').forEach(b=>b.onclick=()=>{r.bookmark=Number(b.dataset.bookmark);save();b.textContent='已記錄閱讀位置';});
+  $('#reading-bookmark').onclick=()=>document.getElementById('sec-'+(r.bookmark||0))?.scrollIntoView?.({behavior:'smooth'});
   hidePop();
   $('#prev').onclick=()=>location.hash=lessons[i-1].id;
   $('#next').onclick=()=>location.hash=lessons[i+1].id;
@@ -311,10 +318,9 @@ $('#todo').addEventListener('change',list);
 $('#search').addEventListener('input',list);
 if($('#start'))$('#start').onclick=()=>{location.hash=lessons[0].id;show(lessons[0].id);$('#lesson').scrollIntoView?.();};
 $('#resume').onclick=()=>{
-  const nextAi=lessons.find(l=>!isEngineering(l)&&!passed(l));
-  const nextAny=lessons.find(l=>!passed(l));
-  const id=(nextAi||nextAny||lessons[0]).id;
+  const id=state.last||lessons[0].id;
   location.hash=id;show(id);
+  document.getElementById('sec-'+(record(current).bookmark||0))?.scrollIntoView?.({behavior:'smooth'});
 };
 $('#export').onclick=()=>{
   const url=URL.createObjectURL(new Blob([JSON.stringify({version:1,type:KEY,...state},null,2)],{type:'application/json'})),a=document.createElement('a');
@@ -332,7 +338,7 @@ $('#import').addEventListener('change',async e=>{
         state=next;save();show(state.last);location.hash=state.last;message('進度已匯入。');
   }catch(err){message('匯入失敗：'+err.message);}finally{e.target.value='';}
 });
-window.addEventListener('hashchange',()=>show(location.hash.slice(1)));
+window.addEventListener('hashchange',()=>{show(location.hash.slice(1));$('#lesson').scrollIntoView?.({block:'start'});});
 show(location.hash.slice(1)||state.last);
 if($('#quiz-hub-btn'))$('#quiz-hub-btn').onclick=()=>{location.hash='quiz';};
 })();
