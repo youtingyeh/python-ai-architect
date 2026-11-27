@@ -63,8 +63,8 @@ aside>select,aside>input[type=search]{width:100%;margin-top:4px}
 #unit,#lesson{background:white;padding:36px 42px;border:1px solid #ced7dc;border-radius:14px;min-width:0;box-shadow:0 2px 12px rgba(0,0,0,.03)}
 #unit p,#lesson p,.lesson-prose{white-space:pre-line;margin:12px 0 18px}
 .inline-code{background:#edf2f7;color:#1a365d;padding:2px 6px;border-radius:5px;font:14.5px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;border:1px solid #d5e0ea}
-.math-inline{font-family:"Cambria Math","Times New Roman","STIX Two Math",Georgia,serif;font-size:1.06em;color:#0d2b45;background:#f4f8fc;padding:1px 6px;border-radius:5px;display:inline-flex;align-items:center;gap:2px;vertical-align:baseline;white-space:nowrap}
-.math-block{font-family:"Cambria Math","Times New Roman","STIX Two Math",Georgia,serif;font-size:1.14em;color:#0d2b45;background:#f4f8fc;border:1px solid #d5e3f0;border-left:4px solid #185c91;border-radius:8px;padding:14px 20px;margin:16px 0;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px;overflow-x:auto;white-space:normal}
+.math-inline{font-family:"Cambria Math","Times New Roman","STIX Two Math",Georgia,serif;font-size:1.06em;color:#0d2b45;background:#f4f8fc;padding:1px 6px;border-radius:5px;display:inline-block;vertical-align:baseline;white-space:nowrap;line-height:1.5}
+.math-block{font-family:"Cambria Math","Times New Roman","STIX Two Math",Georgia,serif;font-size:1.14em;color:#0d2b45;background:#f4f8fc;border:1px solid #d5e3f0;border-left:4px solid #185c91;border-radius:8px;padding:14px 20px;margin:16px 0;display:block;text-align:center;overflow-x:auto;white-space:normal;line-height:2}
 .mtext{font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;font-style:normal;font-size:.92em}
 .mfrac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 4px;line-height:1.25;font-size:.94em}
 .mnum{border-bottom:1.5px solid #0d2b45;padding:0 5px 2px;text-align:center}
@@ -123,3 +123,61 @@ summary{cursor:pointer}
   main,header.site-header{padding:16px}
   .intro{padding:20px}
 }
+
+/* ---------- 白話入門篇 ---------- */
+.easy-block{background:#f6fbf4;border:1px solid #cfe3c8;border-radius:14px;padding:22px 24px;margin:22px 0}
+.easy-head,.deep-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 14px;margin-bottom:14px}
+.deep-head{margin:34px 0 8px;padding:14px 18px;background:#eef3f8;border-radius:12px;border:1px solid #d3dfe9}
+.easy-tag,.deep-tag{font-weight:800;font-size:20px;color:#2f6b25}
+.deep-tag{color:#113f67}
+.easy-sub{font-size:15px;color:#52636e}
+.easy-hook{font-size:18px;background:white;border-left:5px solid #6aa85c;padding:16px 20px;border-radius:8px;margin-bottom:18px}
+.easy-section{background:white;border-radius:10px;padding:18px 20px;margin:14px 0;border:1px solid #e1ecdc}
+.easy-section h3{color:#2f6b25}
+.glossary-box,.walk-box{background:white;border-radius:10px;padding:18px 20px;margin:14px 0;border:1px solid #e1ecdc}
+.glossary{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin:10px 0 0}
+.glossary div{background:#fbfdf9;border:1px solid #e3eedf;border-radius:10px;padding:12px 14px}
+.glossary dt{font-weight:800;color:#113f67;margin-bottom:4px}
+.glossary dd{margin:0;font-size:15.5px;line-height:1.75}
+.walk-box{border-left:5px solid #e0a43a}
+.faq-box,.recap-box{background:white;border:1px solid #ced7dc;border-radius:12px;padding:20px 22px;margin:22px 0}
+.faq{border-top:1px solid #e6ecef;padding:10px 0}
+.faq summary{font-weight:700;cursor:pointer;color:#172329}
+.faq .lesson-prose{margin-top:8px}
+.recap-box{background:#fff8ea;border-color:#f0d9a8}
+.recap-box li{margin:6px 0}
+.lesson-toc li.sub{margin-left:18px;font-size:.95em;color:#3b4b55}
+.term{border-bottom:2px dotted #3b7fb8;cursor:help;background:linear-gradient(transparent 60%,#e3f0fb 60%)}
+.term:focus{outline:2px solid #3b7fb8;outline-offset:2px}
+.term-demo{border-bottom:2px dotted #3b7fb8}
+.term-pop{position:absolute;z-index:50;background:#fff;border:1px solid #b9cbd8;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.15);padding:14px 16px;font-size:15.5px;line-height:1.7}
+.term-pop b{color:#113f67}
+.term-pop p{margin:6px 0 10px}
+.pop-close{font-size:14px;padding:4px 12px}
+/* 分享版首頁 */
+.welcome{background:#fffdf7;border:1px solid #ecdcb4;border-radius:14px;padding:22px 26px;margin:20px 0}
+.welcome h2{font-size:24px;margin-bottom:8px}
+.welcome-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:14px}
+.welcome-steps div{background:white;border:1px solid #efe4c9;border-radius:10px;padding:14px 16px;font-size:15.5px}
+.welcome-steps b{display:block;color:#8a5a00;margin-bottom:4px}
+@media (max-width:760px){.easy-block{padding:16px}.intro-grid{grid-template-columns:1fr}}
+.quiz-cta{display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;background:#f3f0fb;border:1px solid #d9d1f0;border-radius:12px;padding:16px 20px;margin:24px 0}
+.quiz-cta b{display:block;font-size:18px;color:#4a3a8a}
+.quiz-cta span{font-size:15.5px;color:#3b4b55}
+.quiz-cta .ok,.qs.ok{color:#2f6b25}
+.button-link{background:#4a3a8a;color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-weight:700}
+.button-link:hover{background:#3a2c73}
+.toc-quiz{font-size:15px;margin:10px 0 0;color:#4a3a8a}
+.track-badge.quiz{background:#ece6fb;color:#4a3a8a}
+.quiz-link{background:#ece6fb!important;color:#4a3a8a!important}
+.quiz-nav{font-size:15.5px}
+.quiz-hub{padding-left:0;list-style:none;display:grid;gap:8px}
+.quiz-hub a{display:flex;justify-content:space-between;gap:12px;padding:10px 14px;background:#fff;border:1px solid #e1e7ec;border-radius:8px;text-decoration:none;color:#172329}
+.quiz-hub a:hover{border-color:#b6a8e6}
+.qs{white-space:nowrap;font-size:14px;font-weight:700}.qs.todo{color:#7a8a94}.qs.retry{color:#b06a00}
+
+/* 公式上下標：明顯縮小並上移／下移 */
+.math-inline sub,.math-block sub{font-size:.68em;vertical-align:-.45em;line-height:0;margin-left:1px}
+.math-inline sup,.math-block sup{font-size:.68em;vertical-align:.75em;line-height:0;margin-left:1px}
+.math-inline sub .mtext,.math-block sub .mtext,.math-inline sup .mtext,.math-block sup .mtext{font-size:1em}
+.math-inline sub sub,.math-inline sup sup,.math-block sub sub,.math-block sup sup{font-size:.85em}

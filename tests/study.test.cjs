@@ -1,5 +1,5 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),{parseHTML}=require('linkedom');
-function boot(){const {window}=parseHTML(fs.readFileSync('study.html','utf8')),saved={};for(const id of ['stage','search'])Object.defineProperty(window.document.querySelector('#'+id),'value',{value:'',writable:true});const ctx={window,document:window.document,location:{hash:''},localStorage:{getItem:()=>null,setItem:(k,v)=>saved[k]=v},Blob,URL,setTimeout,confirm:()=>true};vm.createContext(ctx);for(const n of ['study-data.js','study.js'])vm.runInContext(fs.readFileSync(n,'utf8'),ctx);return {window,ctx,saved,d:window.document};}
+function boot(){const {window}=parseHTML(fs.readFileSync('study.html','utf8')),saved={};for(const id of ['stage','search'])Object.defineProperty(window.document.querySelector('#'+id),'value',{value:'',writable:true});const ctx={window,document:window.document,location:{hash:''},localStorage:{getItem:()=>null,setItem:(k,v)=>saved[k]=v},Blob,URL,setTimeout,confirm:()=>true};vm.createContext(ctx);for(const n of ['study-data.js','glossary.js','study.js'])vm.runInContext(fs.readFileSync(n,'utf8'),ctx);return {window,ctx,saved,d:window.document};}
 test('all 76 reading lessons render with AI-first order, 30-minute reading depth, examples, and valid questions',()=>{
   const {window,ctx,d}=boot();
   assert.equal(window.STUDY.length,76);
@@ -15,6 +15,11 @@ test('all 76 reading lessons render with AI-first order, 30-minute reading depth
     ctx.location.hash='#'+l.id;
     window.dispatchEvent(new window.Event('hashchange'));
     assert.equal(d.querySelectorAll('textarea').length,0);
+    // 閱讀頁不放選擇題，只放前往測驗區的連結
+    assert.equal(d.querySelectorAll('fieldset').length,0);
+    assert.ok(d.querySelector(`a[href="#quiz-${l.id}"]`),`Lesson ${l.id} should link to its quiz`);
+    ctx.location.hash='#quiz-'+l.id;
+    window.dispatchEvent(new window.Event('hashchange'));
     assert.equal(d.querySelectorAll('fieldset').length,l.quiz.length);
     assert.ok(l.sections.length>=5,`Lesson ${l.id} should have at least 5 deep sections`);
     const secChars=l.sections.reduce((n,[h,p])=>n+String(h).length+String(p).length,0);
@@ -35,8 +40,10 @@ test('all 76 reading lessons render with AI-first order, 30-minute reading depth
   assert.ok(count>=228);
 });
 test('grading provides explanation and changing answer invalidates passed state',()=>{
-  const {window,d,saved}=boot();
+  const {window,ctx,d,saved}=boot();
   const l=window.STUDY[0];
+  ctx.location.hash='#quiz-'+l.id;
+  window.dispatchEvent(new window.Event('hashchange'));
   for(let i=0;i<l.quiz.length;i++){
     const el=d.querySelector(`[name=q${i}][value="${l.quiz[i].answer}"]`);
     el.checked=true;
@@ -53,4 +60,14 @@ test('grading provides explanation and changing answer invalidates passed state'
   d.querySelector('#quiz').dispatchEvent(new window.Event('submit',{bubbles:true,cancelable:true}));
   assert.match(d.querySelector('#result').textContent,new RegExp(`${l.quiz.length-1} \\/ ${l.quiz.length}`));
   assert.equal(d.querySelectorAll('.wrong').length,1);
+});
+
+test('quiz hub lists every lesson; term tooltips render',()=>{
+  const {window,ctx,d}=boot();
+  ctx.location.hash='#quiz';
+  window.dispatchEvent(new window.Event('hashchange'));
+  assert.equal(d.querySelectorAll('.quiz-hub a').length,76);
+  ctx.location.hash='#ext-tensor';
+  window.dispatchEvent(new window.Event('hashchange'));
+  assert.ok(d.querySelectorAll('.lesson-prose .term').length>0);
 });

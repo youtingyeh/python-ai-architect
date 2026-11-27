@@ -3,48 +3,66 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AI 深度自學教材｜每章 30 分鐘完整閱讀與選擇題驗收</title>
+<title>AI 自學教材｜零基礎也看得懂，每章 30 分鐘</title>
+<meta name="description" content="用生活比喻從零學懂 AI：從「什麼問題該交給 AI」到 ChatGPT 背後的原理、RAG、Agent。每章約 30 分鐘，附名詞小辭典與選擇題。">
+<meta property="og:title" content="AI 自學教材｜零基礎也看得懂，每章 30 分鐘">
+<meta property="og:description" content="43 堂 AI 主線課程：生活比喻、名詞小辭典、跟著算一次、選擇題詳解。整理自吳恩達、李宏毅、D2L、Karpathy 與 Microsoft 公開教材。">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#f4f1ea">
 <link rel="stylesheet" href="route.css">
 <script defer src="study-data.js"></script>
+<script defer src="glossary.js"></script>
 <script defer src="study.js"></script>
 </head>
 <body>
 <header class="site-header">
-  <a class="brand-link" href="study.html"><strong>AI 深度自學教材</strong><span>30 分鐘完整章節 · 範例拆解 · 選擇題驗收</span></a>
+  <a class="brand-link" href="study.html"><strong>AI 深度自學教材</strong><span>零基礎友善 · 每章約 30 分鐘 · 白話講解＋選做測驗</span></a>
   <nav class="top-links" aria-label="快速切換">
-    <a href="#ext-orientation">1. 吳恩達 AI 判斷</a>
-    <a href="#ext-tensor">2. 李宏毅 &amp; D2L 機器學習</a>
-    <a href="#ext-micrograd">3. Karpathy 語言模型底層</a>
-    <a href="#ms-lesson-00">4. 微軟生成式 AI 應用</a>
-    <a href="#ext-context">5. Agent 與進階系統</a>
-    <a href="#w1">6. 後續工程延伸（Python／網站／架構）</a>
+    <a href="#ext-orientation">1. AI 能做什麼</a>
+    <a href="#ext-tensor">2. 機器怎麼學習</a>
+    <a href="#ext-micrograd">3. ChatGPT 的原理</a>
+    <a href="#ms-lesson-00">4. 生成式 AI 應用</a>
+    <a href="#ext-context">5. Agent 與進階</a>
+    <a href="#w1">6. 工程延伸（選讀）</a>
+    <a href="#quiz" class="quiz-link">🧠 自我測驗區</a>
   </nav>
 </header>
 <main>
-  <p class="eyebrow">AI-FIRST CURRICULUM · 30-MINUTE DEEP READING CHAPTERS</p>
-  <h1>先學透 AI 核心與生成式應用，<br>每一章都有足夠讀滿 30 分鐘的深度內容。</h1>
-  <p class="lead">以五大經典 AI 教材為主線（第 1～43 課），將 Python、網站開發與系統架構暫置於後續工程延伸（第 44～76 課）。每章提供 6 大深度教學小節、完整程式碼／數值推演範例、逐步拆解、進階參考實作與情境選擇題詳解。</p>
+  <p class="eyebrow">AI 自學教材 · 給沒有背景的人</p>
+  <h1>從「AI 到底在做什麼」開始，<br>一章 30 分鐘，慢慢把 AI 讀懂。</h1>
+  <p class="lead">不需要會寫程式，也不需要數學背景。每一章都用生活比喻把原理講清楚，專有名詞第一次出現就會解釋，數字推演一步一步帶你算；忘記某個詞時，點一下虛線底線就能看解釋。</p>
+
+  <section class="welcome" aria-label="第一次來看這裡">
+    <h2>👋 第一次來？這樣用就好</h2>
+    <p>這是一份整理自五套國際知名公開 AI 課程的中文自學講義，共 43 堂 AI 主線課。內容全部在網站裡，不用註冊、不用下載。</p>
+    <div class="welcome-steps">
+      <div><b>① 從第 1 課開始</b>按下方「從第 1 課開始」或「繼續上次進度」。課程有順序，前面的觀念後面會用到。</div>
+      <div><b>② 慢慢讀正文</b>每課約 30 分鐘，分成幾個小節，可以分幾次讀完。<span class="term-demo">虛線底線</span>的詞點一下就有解釋。</div>
+      <div><b>③ 程式碼可以選讀</b>正文後面附有程式碼範例與逐行說明，給想動手的人參考；不會寫程式可以直接跳過，不影響理解。</div>
+      <div><b>④ 想考自己再去「🧠 自我測驗區」</b>測驗獨立在另一區，讀完想檢查理解再去，答完會顯示詳解。進度只存在你自己的瀏覽器裡。</div>
+    </div>
+  </section>
 
   <section class="intro">
     <div class="intro-grid">
       <div>
-        <h2>如何使用本教材（每章 30 分鐘深度學習配置）</h2>
-        <p>每一章均為獨立完整的長篇講義（約 4,000～6,000 字），無須離開網站看長影片或繳交申論作業：</p>
+        <h2>每一章的結構（約 30 分鐘閱讀）</h2>
         <ul class="time-plan">
-          <li><strong>概念與原理精讀（18 分鐘）：</strong>依序閱讀「問題背景 → 底層原理與數學／機制直覺 → 架構流程與取捨對照 → 帶數字真實案例推演 → 常見工程陷阱 → 重點檢核清單」六大節。</li>
-          <li><strong>範例與完整解法拆解（7 分鐘）：</strong>對照章節內的程式碼或量化計算範例，逐條閱讀步驟拆解，並展開完整參考實作檢視防禦性設計與驗證方法。</li>
-          <li><strong>情境選擇題驗收（5 分鐘）：</strong>回答 3 題情境與除錯選擇題，立即檢視正確答案與完整解析；全部答對即記錄本課通過，可隨時修改重答。</li>
+          <li><strong>📖 正文（約 25～35 分鐘）：</strong>從生活情境出發，用比喻解釋原理，再帶你一步步算數字、看常見誤區，最後整理重點。專有名詞第一次出現都會順便解釋。</li>
+          <li><strong>💻 程式碼範例（選讀）：</strong>附逐行拆解，給想動手實作的人；不寫程式也能讀懂整課。</li>
         </ul>
+        <p><strong>🧠 自我測驗區（選做）：</strong>每課 3 題情境選擇題集中在獨立的測驗區，想考考自己時再去，答完立即看詳解，全對就在課程列表打勾。</p>
+        <p class="muted">每章頁首會依實際字數估算閱讀時間（以每分鐘約 300 字計算）。</p>
       </div>
       <div class="track-callout">
-        <h3>課程主線優先順序</h3>
-        <p><strong>第一優先：AI 學習主線（第 1～43 課）</strong><br>從 AI 任務分類與專案驗收出發，依序掌握張量、自動微分、損失函數、分類評估、神經網路訓練、過擬合，再深入 Karpathy 的 micrograd、makemore、Tokenizer、Self-Attention 與 GPT，接著完整學習微軟 22 堂生成式 AI 應用（Prompt、RAG、Function Calling、AI UX、Prompt Injection、LLMOps、開源模型、LoRA 微調、SLM、Agent）與李宏毅 2026 進階主題（Context Engineering、Agent Harness、KV Cache）。</p>
-        <p><strong>暫置於後：工程基礎延伸（第 44～76 課）</strong><br>Python 工程基礎、FastAPI／PostgreSQL／前端網站開發、Docker／CI/CD 與系統架構設計（C4、ADR、Cache、Queue、資安與可靠性）完整保留於第 44～76 課，待完成 AI 主線後再按需查閱或依序推進。</p>
+        <h3>課程安排</h3>
+        <p><strong>AI 主線（第 1～43 課）— 建議從這裡開始</strong><br>先學會判斷「什麼問題適合交給 AI」，接著理解機器怎麼「學習」，再一路拆開 ChatGPT 這類語言模型的運作原理，最後學會怎麼把生成式 AI 用在真實應用（提示詞、RAG 知識庫問答、讓 AI 呼叫工具、AI 代理人、安全與評估）。</p>
+        <p><strong>工程延伸（第 44～76 課）— 想自己動手做系統再看</strong><br>Python、網站與資料庫、系統架構。偏工程師取向，非必讀。</p>
       </div>
     </div>
 
-    <details class="source-details" open>
-      <summary>五大 AI 教學來源、網址與本站教材章節對照表</summary>
+    <details class="source-details">
+      <summary>內容整理自哪些課程？（五大 AI 教學來源對照表）</summary>
       <div class="table-wrap">
         <table class="source-table">
           <thead>
@@ -94,9 +112,11 @@
       </div>
       <progress id="progress" max="76" value="0"></progress>
     </div>
-    <button id="resume" class="primary" type="button">繼續學習 AI 主線</button>
-    <button id="export" type="button">匯出進度</button>
-    <label class="upload">匯入進度<input id="import" type="file" accept="application/json,.json"></label>
+    <button id="start" type="button">從第 1 課開始</button>
+    <button id="resume" class="primary" type="button">繼續上次進度 →</button>
+    <button id="quiz-hub-btn" type="button">🧠 自我測驗區</button>
+    <button id="export" type="button">備份進度</button>
+    <label class="upload">還原進度<input id="import" type="file" accept="application/json,.json"></label>
     <p id="status" role="status"></p>
   </section>
 
@@ -118,7 +138,7 @@
     <article id="lesson" tabindex="-1"></article>
   </div>
 
-  <p class="muted footer-note">答案與進度僅儲存於此瀏覽器（<code>python-ai-reading-v1</code>），不會上傳或交給外部服務批改。每章均包含完整站內教材與詳解，外部原始課程連結僅供延伸查證。</p>
+  <p class="muted footer-note">你的答案與進度只存在你自己的瀏覽器裡，不會上傳。換電腦或清除瀏覽器資料前，可用「備份進度」存成檔案。本站為個人整理的學習筆記，內容改寫自吳恩達、李宏毅、李沐（D2L）、Andrej Karpathy 與 Microsoft 的公開教材，原始課程連結見各章末。</p>
 </main>
 </body>
 </html>
