@@ -35,6 +35,6 @@ for i,l in enumerate(L):
     deep=sum(len(h)+len(p) for h,p in l['sections'])+len(''.join(l['walkthrough']))
     mark='REWRITTEN' if os.path.exists(f"{root}/rewrite/{l['id']}.txt") else ''
     if mark: print(f"{i+1:>2} {l['id']:<18} text={deep:>6} ~{deep/300:4.1f}min {'OK' if deep/300>=30 else 'SHORT'}")
-open(f'{root}/study-data.js','w',encoding='utf8').write('window.STUDY = '+json.dumps(L,ensure_ascii=False)+';')
-open(f'{root}/glossary.js','w',encoding='utf8').write('window.GLOSSARY = '+json.dumps(gloss,ensure_ascii=False)+';\n')
+open(f'{root}/study-data.js','w',encoding='utf8',newline='\n').write('window.STUDY = '+json.dumps(L,ensure_ascii=False)+';')
+open(f'{root}/glossary.js','w',encoding='utf8',newline='\n').write('window.GLOSSARY = '+json.dumps(gloss,ensure_ascii=False)+';\n')
 print(len(gloss),'glossary terms')
