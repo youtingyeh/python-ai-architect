@@ -1,95 +1,48 @@
-# Python → AI Architect：36 週互動教材
+# AI 深度自學教材（Python → AI Architect）
 
-給已有 Python 基礎的學習者。每週約 8～10 小時，從 Python 工程基礎到 Web、資料庫、權限、部署、系統設計與 AI 協作。課程是實作安排，不保證完成後即具備正式架構師職務資格。
+這是一套以 **AI 核心與生成式 AI 應用為主線**、每章提供 **30 分鐘完整深度閱讀內容與情境選擇題驗收** 的自學網站（目前入口為 `study.html`，`index.html`、`route.html`、`genai.html` 均自動導向此頁）。
 
-## 如何學習
+## 課程設計原則
 
-1. 點選一週，閱讀「概念」並用自己的話說明。
-2. 在「範例」先預測結果，再核對逐步拆解。
-3. 在「實作」完成練習，保存草稿與觀察紀錄。
-4. 在「驗收」回答題目；判分附解釋，可重做。
-5. 在「成果」完成完整作業、留下檔案/commit/測試紀錄，逐項自評後標記完成。
+1. **AI 學習主線優先（第 1～43 課）**：
+   先集中學習 AI 專案判斷、機器學習與深度學習訓練基礎、語言模型與 GPT 底層原理、生成式 AI 應用開發（Prompt、RAG、Function Calling、AI UX、Prompt Injection 防護、LLMOps、開源模型、LoRA 微調、SLM、AI Agent）與進階 Context Engineering / Agent Harness / KV Cache 推論機制。
+2. **Python、網站開發與系統架構暫置於後（第 44～76 課）**：
+   原有的 Python 工程基礎（`w1`～`w6`）、網站與資料庫工程（`w7`～`w22`）、系統架構與可靠性（`w23`～`w33`）完整保留於第 44～76 課作為後續工程延伸，可在頁面左側一鍵切換「全部 (76)／AI 主線 (43)／後續工程 (33)」。
+3. **每章 30 分鐘深度閱讀內容（拒絕只有幾行字就直接測驗）**：
+   每一章均為約 4,000～6,000 字的完整站內講義，包含：
+   - **6 大深度教學小節**：問題背景與痛點、底層原理與數學／機制直覺、架構流程與取捨對照、帶數字真實案例推演、常見工程誤區與除錯指南、30 分鐘重點檢核清單。
+   - **完整程式碼／量化推演範例與逐步拆解**：每課均附 25～50 行具體範例與 5～6 步逐行拆解。
+   - **進階參考實作與驗證範本**：可展開對照完整生產級實作或實驗對照腳本（無須繳交作業）。
+   - **3 題情境與除錯選擇題驗收**：立即判分並提供超過百字的深度解析，全部答對即記錄該課通過。
 
-所有 36 週都有兩段概念、範例、拆解、練習、分層提示、參考解法、驗收題與原始文件連結，共 75 題。
+## 五大 AI 教學來源與本站章節對照
 
-Week 1～3 可在瀏覽器執行 Python。固定使用 Pyodide 0.27.7，首次需從 jsDelivr 下載執行環境。程式在 module Web Worker 執行；可停止，載入超時為 60 秒，運算超時為 10 秒。每次為新環境，Python 暫存檔案不保留。範例採 Python 3.12+ 語法，Pyodide 的內建 Python 版本由其發行版決定。
-
-其他週次需在自己的電腦實作。頁面可以保存程式、SQL、指令或設計草稿，但不會執行 FastAPI、PostgreSQL、Docker，也不會自動審查完整專案。需要環境、資料表或專案介面的範例會在說明中標註。
-
-Python 題目測試通過只代表涵蓋的題目案例通過。完整作業仍需自己的測試。執行環境無法載入時，可下載 `.py` 練習與相同測試，在本機通過後以自評方式記錄。
+| 教學來源 | 官方網址 | 本站對應章節與核心內容 |
+| --- | --- | --- |
+| **吳恩達 Andrew Ng — AI For Everyone** | [Coursera 課程](https://www.coursera.org/learn/ai-for-everyone) | **第 1～2 課（起點與 AI 判斷）**：AI 能做什麼、預測／分類／生成與規則系統的決策邊界、技術與商業盡職調查、Baseline 基準線、專案選擇與驗收標準 |
+| **李宏毅 — 機器學習與生成式 AI** | [生成式 AI 與機器學習導論](https://speech.ee.ntu.edu.tw/~hylee/GenAI-ML/2025-fall.php)、[機器學習 2026](https://speech.ee.ntu.edu.tw/~hylee/ml/2026-spring.php) | **第 5～7、9 課 & 第 38～40 課**：機器學習三步驟觀念、資料切分與洩漏、分類評估指標、過擬合診斷、Context Engineering 上下文工程、Agent Harness 外部驗證迴圈、KV Cache 推論加速與記憶體代價 |
+| **李沐等作者 —《動手學深度學習》** | [中文互動教材 D2L](https://zh.d2l.ai/) | **第 3～10 課 & 第 14 課（模型基礎與訓練）**：張量形狀與廣播機制、計算圖與自動微分（Autograd）、線性回歸與損失函數、Softmax 分類、多層感知機（MLP）與 PyTorch 訓練迴圈、正則化與早停、實驗可重現性、自注意力機制 |
+| **Andrej Karpathy — Neural Networks: Zero to Hero** | [官方課程網站](https://karpathy.ai/zero-to-hero.html) | **第 11～15 課（模型內部與語言模型）**：micrograd 純量反向傳播與鏈式法則、makemore Bigram 語言模型與 NLL 損失、UTF-8 與 BPE Tokenizer 演算法、Q/K/V 自注意力與因果遮罩、小型 GPT 訓練與自回歸生成 |
+| **Microsoft — Generative AI for Beginners** | [繁體中文教材](https://github.com/microsoft/generative-ai-for-beginners/blob/main/translations/zh-TW/README.md)、[英文原始教材](https://github.com/microsoft/generative-ai-for-beginners) | **第 16～37 課（生成式 AI 應用完整 22 單元）**：設定與金鑰安全、LLM 文字生成與幻覺、模型選型矩陣、負責任 AI、Prompt 結構、Few-Shot 與任務拆解、文字生成 API、多輪聊天上下文、向量搜尋、RAG 兩段式診斷、Function Calling、AI UX、Prompt Injection 防護、LLMOps 回歸評估、Model Card 與公開權重、微調 vs RAG 決策、SLM 量化部署、AI Agent 行動迴圈、影像生成驗收、Low-Code 取捨、Mistral 與 Meta 模型選型 |
 
 ## 進度與備份
 
-- 草稿、筆記、答案、自評與完成記錄存於此瀏覽器 localStorage。
-- 換裝置、清除瀏覽器資料或換網址前，使用「匯出進度」。在另一台裝置可「匯入進度」。
-- 不會自動同步至 GitHub，沒有帳號系統或雲端保存。
-- 保留舊版 `python-ai-architect-progress-v1` 的手動完成週次，標記為舊版記錄。
-- 不要將密碼、API 金鑰或真實學生私人資料放入學習紀錄。
+- 閱讀與選擇題進度儲存於瀏覽器 `localStorage`（鍵值：`python-ai-reading-v1`），可隨時匯出與匯入 JSON 備份。
+- 舊版 `python-ai-architect-progress-v1`、`python-ai-architect-interactive-v2`、`python-ai-genai-supplement-v1` 與 `python-ai-30min-v1` 的本機資料均保留不覆蓋。
 
-## 本機開啟
+## 本機開啟與測試驗證
 
-使用 HTTP 服務，不要依賴 `file://` 開啟（module worker 需要正常來源）：
+本機開啟靜態伺服器：
 
 ```bash
 python -m http.server 8000
 ```
 
-開啟 http://localhost:8000。教材為 buildless HTML/CSS/JavaScript，閱讀網站不需 npm 安裝。
+開啟 `http://localhost:8000/study.html`。
 
-## 開發與驗證
-
-安裝 Node 22+ 和 Python 3.12+，再執行：
+執行自動化測試驗證（Node 22+ 與 Python 3.12+）：
 
 ```bash
 npm ci
 npm test
 ```
-
-測試包含：教材資料完整性、完成条件、備份驗證、CPython 題目測試、180 個學習頁面 DOM 載入、草稿保存、判分、worker 訊息、停止與超時、舊進度移轉及損毀儲存處理。DOM 測試使用 linkedom，並非瀏覽器視覺或跨裝置驗證。
-
-本次另以 Pyodide 0.27.7 的 Node 執行環境驗證前 3 週解法與題目測試。網站 CDN 下載、瀏覽器 worker 及版面仍應在部署後實際確認。
-
-## 檔案
-
-| 檔案 | 用途 |
-| --- | --- |
-| index.html / styles.css | 介面與響應式樣式 |
-| course.js | 36 週路線、完整作業與自評條件 |
-| lessons.js | 各週教材、練習、問題、解答與來源 |
-| app.js | 導覽、判分、編輯、備份與 Python 操作 |
-| progress.js | 進度驗證與完成條件 |
-| python-worker.js | 背景 Python 執行 |
-| tests/ | 教材與互動驗證 |
-
-## GitHub Pages
-
-`Settings → Pages → Build and deployment → Source → GitHub Actions`。
-
-workflow 先驗證，再僅封裝網站所需的 7 個檔案，避免將 node_modules、測試環境或個人作業一併發布。驗證通過後提供 `interactive-course` 下載 artifact，再嘗試 Pages 部署。
-
-Private repository 能否使用 Pages 取決於 GitHub 方案與設定。原始碼設為 private 不代表一般 Pages 網站也私有；設定前請確認網站的預期可見性。不要為啟用 Pages 自動更改 repository 的公開範圍。
-
-## 作業建議位置
-
-建立 `learning/week01/` 至 `learning/week36/`；另以 `architecture/` 保存需求、圖與 ADR，以 `projects/mini-lms/` 保存獨立練習平台。不要在正式 RISE 網站練習故障或刪除流程。
-
-
-## 生成式 AI 補充教材（2026-11-27）
-
-開啟 `genai.html`，涵蓋 Microsoft Generative AI for Beginners 的 21 課與課前設定，附繁體中文／英文來源、原課週次對照、原創實作任務及自評條件。重複主題標示為整合複習；補充進度與筆記獨立儲存，可匯出匯入。
-
-來源：https://github.com/microsoft/generative-ai-for-beginners/blob/main/translations/zh-TW/README.md
-
-此頁提供學習安排及外部教材連結，不是 Microsoft 官方課程副本。模型範例須在本機或服務環境實作，頁面不處理 API 金鑰或代為執行模型。
-
-## 每次 30 分鐘的整合路線
-
-`route.html` 整合 588 個單元（規劃 294 小時，含複習與選修），包含原 36 週全部主題、微軟 21 課＋設定，以及吳恩達／李宏毅／D2L／Karpathy 精選互補單元。不是外部課程逐堂重製。每個單元提供範圍、任務、成果驗收、計時、筆記、獨立進度與匯出匯入；大作業分成規劃／實作／驗證，未完成可增加接續時段。
-
-原課程與補充頁的 localStorage 不變，新路線使用 python-ai-30min-v1；不假定舊完成標記能等價換算新單元。
-
-## 閱讀與選擇題版（目前入口）
-
-`study.html` 將活動合併成 76 個主題、155 題選擇題。站內提供概念、案例與常見錯誤，來源僅供選讀。無申論、必交實作或自評勾選。全部選擇題答對才記錄本課通過；不代表獨立開發能力。每次可預留 30 分鐘，但不再以舊活動數宣稱總時數。
-
-index.html、route.html、genai.html 轉至新版。舊 localStorage 保留，新進度使用 python-ai-reading-v1，可獨立匯出匯入。

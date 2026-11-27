@@ -1,1 +1,124 @@
-<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AI 閱讀教材與選擇題</title><link rel="stylesheet" href="route.css"><style>.quiz label{display:block;padding:12px;background:#f3f6f8;margin:8px 0;cursor:pointer}.quiz fieldset{border:1px solid #ccd4da;border-radius:8px;margin:20px 0;padding:16px}.quiz legend{font-weight:700}.feedback{padding:14px;border-left:4px solid #185c91}.wrong{border-color:#b44d22}#lesson p{white-space:pre-line}#lesson{background:white;padding:28px;border-radius:12px;min-width:0}.lesson-section{margin-bottom:28px}#lesson code{font-size:15px}.question-status{font-weight:700}</style><script defer src="study-data.js"></script><script defer src="study.js"></script></head><body><header><a href="study.html">AI 閱讀教材</a></header><main><p class="eyebrow">閱讀 · 看懂範例 · 選擇題驗收</p><h1>在這裡讀懂，<br>在這裡檢查理解。</h1><p class="lead">不用另找影片、不用交申論。每課提供解說、案例與立即判分的選擇題。</p><section class="intro"><p>每次預留約 30 分鐘：閱讀 15 分、範例理解 10 分、答題與解析 5 分。依內容和熟悉程度調整，不必為了計時而停留。這是概念理解課程；選擇題通過不代表已具備獨立開發能力。</p><p>原本的 588 項活動已合併為 <strong>76 個主題、155 題選擇題</strong>。不再用活動數推算總學時；舊筆記仍留在原瀏覽器儲存空間，新版只記錄選項與驗收結果。</p></section><section class="dashboard"><div><b id="count"></b><progress id="progress" max="76" value="0"></progress></div><button id="resume">繼續學習</button><button id="export">匯出進度</button><label class="upload">匯入進度<input id="import" type="file" accept="application/json,.json"></label><p id="status" role="status"></p></section><div class="workspace"><aside><label for="stage">階段</label><select id="stage"><option value="">全部階段</option></select><label for="search">搜尋主題</label><input id="search" type="search" placeholder="例如：Python、RAG、梯度"><label><input type="checkbox" id="todo">只看尚未通過</label><p id="matches"></p><nav id="units" aria-label="課程列表"></nav></aside><article id="lesson" tabindex="-1"></article></div><p class="muted">答案與進度只存此瀏覽器，不會上傳或交給 AI 批改。答案解析由教材預先編寫；外部來源僅供查證，完成本頁不需開啟。</p></main></body></html>
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI 深度自學教材｜每章 30 分鐘完整閱讀與選擇題驗收</title>
+<link rel="stylesheet" href="route.css">
+<script defer src="study-data.js"></script>
+<script defer src="study.js"></script>
+</head>
+<body>
+<header class="site-header">
+  <a class="brand-link" href="study.html"><strong>AI 深度自學教材</strong><span>30 分鐘完整章節 · 範例拆解 · 選擇題驗收</span></a>
+  <nav class="top-links" aria-label="快速切換">
+    <a href="#ext-orientation">1. 吳恩達 AI 判斷</a>
+    <a href="#ext-tensor">2. 李宏毅 &amp; D2L 機器學習</a>
+    <a href="#ext-micrograd">3. Karpathy 語言模型底層</a>
+    <a href="#ms-lesson-00">4. 微軟生成式 AI 應用</a>
+    <a href="#ext-context">5. Agent 與進階系統</a>
+    <a href="#w1">6. 後續工程延伸（Python／網站／架構）</a>
+  </nav>
+</header>
+<main>
+  <p class="eyebrow">AI-FIRST CURRICULUM · 30-MINUTE DEEP READING CHAPTERS</p>
+  <h1>先學透 AI 核心與生成式應用，<br>每一章都有足夠讀滿 30 分鐘的深度內容。</h1>
+  <p class="lead">以五大經典 AI 教材為主線（第 1～43 課），將 Python、網站開發與系統架構暫置於後續工程延伸（第 44～76 課）。每章提供 6 大深度教學小節、完整程式碼／數值推演範例、逐步拆解、進階參考實作與情境選擇題詳解。</p>
+
+  <section class="intro">
+    <div class="intro-grid">
+      <div>
+        <h2>如何使用本教材（每章 30 分鐘深度學習配置）</h2>
+        <p>每一章均為獨立完整的長篇講義（約 4,000～6,000 字），無須離開網站看長影片或繳交申論作業：</p>
+        <ul class="time-plan">
+          <li><strong>概念與原理精讀（18 分鐘）：</strong>依序閱讀「問題背景 → 底層原理與數學／機制直覺 → 架構流程與取捨對照 → 帶數字真實案例推演 → 常見工程陷阱 → 重點檢核清單」六大節。</li>
+          <li><strong>範例與完整解法拆解（7 分鐘）：</strong>對照章節內的程式碼或量化計算範例，逐條閱讀步驟拆解，並展開完整參考實作檢視防禦性設計與驗證方法。</li>
+          <li><strong>情境選擇題驗收（5 分鐘）：</strong>回答 3 題情境與除錯選擇題，立即檢視正確答案與完整解析；全部答對即記錄本課通過，可隨時修改重答。</li>
+        </ul>
+      </div>
+      <div class="track-callout">
+        <h3>課程主線優先順序</h3>
+        <p><strong>第一優先：AI 學習主線（第 1～43 課）</strong><br>從 AI 任務分類與專案驗收出發，依序掌握張量、自動微分、損失函數、分類評估、神經網路訓練、過擬合，再深入 Karpathy 的 micrograd、makemore、Tokenizer、Self-Attention 與 GPT，接著完整學習微軟 22 堂生成式 AI 應用（Prompt、RAG、Function Calling、AI UX、Prompt Injection、LLMOps、開源模型、LoRA 微調、SLM、Agent）與李宏毅 2026 進階主題（Context Engineering、Agent Harness、KV Cache）。</p>
+        <p><strong>暫置於後：工程基礎延伸（第 44～76 課）</strong><br>Python 工程基礎、FastAPI／PostgreSQL／前端網站開發、Docker／CI/CD 與系統架構設計（C4、ADR、Cache、Queue、資安與可靠性）完整保留於第 44～76 課，待完成 AI 主線後再按需查閱或依序推進。</p>
+      </div>
+    </div>
+
+    <details class="source-details" open>
+      <summary>五大 AI 教學來源、網址與本站教材章節對照表</summary>
+      <div class="table-wrap">
+        <table class="source-table">
+          <thead>
+            <tr>
+              <th>教學來源</th>
+              <th>官方網址</th>
+              <th>本站對應內容與章節範圍</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>吳恩達 Andrew Ng — AI For Everyone</strong></td>
+              <td><a href="https://www.coursera.org/learn/ai-for-everyone" target="_blank" rel="noopener">Coursera 課程 ↗</a></td>
+              <td><strong>第 1～2 課（起點與 AI 判斷）：</strong>AI 能做什麼、預測／分類／生成與規則系統的決策邊界、技術與商業盡職調查、Baseline 基準線、專案選擇與驗收標準</td>
+            </tr>
+            <tr>
+              <td><strong>李宏毅 — 機器學習與生成式 AI</strong></td>
+              <td><a href="https://speech.ee.ntu.edu.tw/~hylee/GenAI-ML/2025-fall.php" target="_blank" rel="noopener">生成式 AI 與機器學習導論 ↗</a><br><a href="https://speech.ee.ntu.edu.tw/~hylee/ml/2026-spring.php" target="_blank" rel="noopener">機器學習 2026 ↗</a></td>
+              <td><strong>第 5～7、9 課 &amp; 第 38～40 課（模型訓練評估 &amp; 2026 Agent 進階）：</strong>機器學習三步驟觀念、資料切分與洩漏、分類評估指標、過擬合診斷、Context Engineering 上下文工程、Agent Harness 外部驗證迴圈、KV Cache 推論加速與記憶體代價</td>
+            </tr>
+            <tr>
+              <td><strong>李沐等作者 —《動手學深度學習》</strong></td>
+              <td><a href="https://zh.d2l.ai/" target="_blank" rel="noopener">中文互動教材 D2L ↗</a></td>
+              <td><strong>第 3～10 課 &amp; 第 14 課（模型基礎與訓練）：</strong>張量（Tensor）形狀與廣播機制、計算圖與自動微分（Autograd）、線性回歸與損失函數、Softmax 分類、多層感知機（MLP）與 PyTorch 訓練迴圈、正則化與早停、實驗可重現性、縮放點積自注意力機制</td>
+            </tr>
+            <tr>
+              <td><strong>Andrej Karpathy — Neural Networks: Zero to Hero</strong></td>
+              <td><a href="https://karpathy.ai/zero-to-hero.html" target="_blank" rel="noopener">官方課程網站 ↗</a></td>
+              <td><strong>第 11～15 課（模型內部與語言模型）：</strong>micrograd 純量反向傳播與鏈式法則、makemore Bigram 統計語言模型與 NLL 損失、UTF-8 與 BPE Tokenizer 演算法、Q/K/V 自注意力與 Causal Mask 因果遮罩、小型 GPT 架構與自回歸訓練／生成</td>
+            </tr>
+            <tr>
+              <td><strong>Microsoft — Generative AI for Beginners</strong></td>
+              <td><a href="https://github.com/microsoft/generative-ai-for-beginners/blob/main/translations/zh-TW/README.md" target="_blank" rel="noopener">繁體中文教材 ↗</a><br><a href="https://github.com/microsoft/generative-ai-for-beginners" target="_blank" rel="noopener">英文原始教材 ↗</a></td>
+              <td><strong>第 16～37 課（生成式 AI 應用完整 22 單元）：</strong>金鑰與後端代理架構、LLM 生成與幻覺機制、模型選型矩陣、負責任 AI、Prompt 結構、Few-Shot 與任務拆解、文字生成 API 容錯、多輪聊天狀態、向量搜尋、RAG 兩段式診斷、Function Calling 安全沙箱、AI UX、Prompt Injection 防禦、LLMOps 回歸評估、Model Card 與開源權重、微調 vs RAG 決策、SLM 量化部署、AI Agent 行動迴圈、影像生成驗收、Low-Code 取捨、Mistral 與 Meta Llama 模型家族選型</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+  </section>
+
+  <section class="dashboard">
+    <div class="progress-box">
+      <div class="progress-stats">
+        <b id="count">0 / 76 課通過</b>
+        <span id="ai-count" class="track-stat">AI 主線：0 / 43 課 · 後續工程延伸：0 / 33 課</span>
+      </div>
+      <progress id="progress" max="76" value="0"></progress>
+    </div>
+    <button id="resume" class="primary" type="button">繼續學習 AI 主線</button>
+    <button id="export" type="button">匯出進度</button>
+    <label class="upload">匯入進度<input id="import" type="file" accept="application/json,.json"></label>
+    <p id="status" role="status"></p>
+  </section>
+
+  <div class="workspace">
+    <aside>
+      <div class="track-tabs" role="group" aria-label="課程範圍快速篩選">
+        <button type="button" class="track-btn active" data-track="all">全部 (76)</button>
+        <button type="button" class="track-btn" data-track="ai">AI 主線 (43)</button>
+        <button type="button" class="track-btn" data-track="eng">後續工程 (33)</button>
+      </div>
+      <label for="stage">學習階段</label>
+      <select id="stage"><option value="">全部階段</option></select>
+      <label for="search">搜尋主題、關鍵字或教材來源</label>
+      <input id="search" type="search" placeholder="例如：RAG、注意力、Karpathy、D2L、微調">
+      <label class="checkbox-label"><input type="checkbox" id="todo"> 只看尚未通過</label>
+      <p id="matches"></p>
+      <nav id="units" aria-label="課程列表"></nav>
+    </aside>
+    <article id="lesson" tabindex="-1"></article>
+  </div>
+
+  <p class="muted footer-note">答案與進度僅儲存於此瀏覽器（<code>python-ai-reading-v1</code>），不會上傳或交給外部服務批改。每章均包含完整站內教材與詳解，外部原始課程連結僅供延伸查證。</p>
+</main>
+</body>
+</html>
