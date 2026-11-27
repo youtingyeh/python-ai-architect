@@ -1,0 +1,282 @@
+@section 開場：讓別人也能呼叫你的程式
+前六課，我們寫出了有測試的函式和類別，也理解了 HTTP。但到目前為止，你的 Python 程式只能**你自己**坐在電腦前、打開終端機執行。
+
+如果想讓：
+- 手機 App 查詢學生名單；
+- 網頁送出作業評分；
+- 其他部門的系統取得資料；
+- 甚至第 26 課的 AI 函式呼叫、第 33 課的 AI 代理，透過工具來使用你的功能……
+
+你就需要把 Python 函式包裝成一個**一直在線上、等待別人透過網路呼叫**的服務。這種服務叫做「**後端**」（Backend），對外提供的介面叫做 **API**（Application Programming Interface，應用程式介面）。
+
+這一課要用 **FastAPI** 寫出第一個後端。FastAPI 是目前 Python 最受歡迎的 API 框架之一，很多 AI 推論服務也用它。它最大的特色是：**利用第 46 課學過的型別標註**，自動幫你轉換參數、驗證資料、產生互動式文件。
+
+我們要學：
+1. 後端服務是怎麼跑起來的：Uvicorn 和 FastAPI 的分工；
+2. 怎麼設計好的網址（REST 風格）；
+3. 誠實回報狀態碼：404、204 的正確用法；
+4. 不用寫前端，怎麼測試 API；
+5. 為什麼資料一重啟就消失了；
+6. 四個新手常見陷阱。
+
+@section 第一個後端：十幾行程式
+先看看最簡單的例子。`main.py`：
+```
+from fastapi import FastAPI, HTTPException, Response
+
+app = FastAPI()
+
+students = {1: {"id": 1, "name": "Alice"}}
+
+@app.get("/students")
+def list_students():
+    return list(students.values())
+
+@app.get("/students/{student_id}")
+def get_student(student_id: int):
+    if student_id not in students:
+        raise HTTPException(status_code=404, detail="Student not found")
+    return students[student_id]
+
+@app.delete("/students/{student_id}", status_code=204)
+def delete_student(student_id: int):
+    if student_id not in students:
+        raise HTTPException(status_code=404, detail="Student not found")
+    del students[student_id]
+    return Response(status_code=204)
+```
+
+幾個新東西：
+- `@app.get("/students")`：這叫「**裝飾器**」（Decorator），意思是「當有人用 **GET** 方法存取 `/students` 這個網址時，執行下面這個函式」。這種「網址 + 方法 → 函式」的對應，叫做「**路由**」（Route）；
+- `{student_id}`：網址中的**變數**，叫做「**路徑參數**」。`/students/3` 會讓 `student_id` 等於 3；
+- `HTTPException`：FastAPI 提供的例外，用來回傳錯誤的狀態碼（第 45 課的「底層拋出例外，外層決定怎麼呈現」，在這裡 FastAPI 就是那個外層）。
+
+**啟動伺服器：**
+```
+python -m uvicorn main:app --reload
+```
+看到 `Uvicorn running on http://127.0.0.1:8000`，你的後端就上線了（在你自己的電腦上）。
+
+@section 誰在聽電話？Uvicorn 和 FastAPI 的分工
+上面的指令裡，有三個名字：
+- **`uvicorn`**：真正負責「**聽網路**」的程式，叫做 **ASGI 伺服器**。它佔用 8000 號連接埠（第 49 課），接收網路上傳來的原始 HTTP 訊息；
+- **`main`**：你的檔案 `main.py`（模組名稱，第 45 課）；
+- **`app`**：`main.py` 裡面那個 `app = FastAPI()` 變數。
+
+`--reload` 的意思是：程式碼一修改，就自動重新啟動，方便開發時使用（正式環境不要開）。
+
+**一個請求的完整旅程：**
+1. 有人送來 `GET /students/3`；
+2. **Uvicorn** 接收原始的網路訊息，解析成 Python 看得懂的格式，交給 `app`；
+3. **FastAPI** 查路由表：GET + `/students/{student_id}`，找到 `get_student` 函式；
+4. FastAPI 看到 `student_id: int` 這個型別標註，**自動**把網址中的文字 `"3"` 轉成整數 `3`。如果有人送 `/students/abc`，轉換失敗，FastAPI 在進入你的函式**之前**就直接回傳 `422`；
+5. 你的函式執行，回傳一個字典；
+6. FastAPI 把字典轉成 JSON，加上 `Content-Type: application/json` 標頭；
+7. Uvicorn 把回應送回網路。
+
+**比喻：**Uvicorn 是餐廳的**接線生**，負責接電話、轉達；FastAPI 是**領班**，看是什麼需求、交給哪位廚師（你的函式）處理，最後把菜擺盤送出。
+
+**注意：型別標註在這裡真的會檢查！**
+第 46 課說過，一般的型別標註在執行時不會自動擋錯。但 FastAPI 會**主動讀取**型別標註，並在請求進來時做轉換和驗證。這是 FastAPI 最強大的地方。
+
+@section 設計好的網址：名詞是資源，動詞交給方法
+設計 API 的網址時，有一個廣泛使用的風格叫 **REST**。核心原則是：
+
+> **網址用「名詞」表示資源，HTTP 方法表示「動作」。**
+
+**好的設計：**
+- `GET /students`：列出所有學生；
+- `GET /students/3`：取得 3 號學生；
+- `POST /students`：新增一位學生；
+- `PATCH /students/3`：修改 3 號學生的部分資料；
+- `DELETE /students/3`：刪除 3 號學生。
+
+**不好的設計：**
+- `POST /getAllStudents`
+- `GET /deleteStudentById?id=3`
+
+不好的設計有兩個問題：
+1. 網址裡塞滿動詞，每個動作一個網址，越來越亂，別人很難猜；
+2. 更危險的是：`GET /deleteStudentById` 用 GET 做刪除，違反了 GET「**安全、不改變資料**」的規則（第 49 課）。瀏覽器、搜尋引擎爬蟲、快取系統都可能自動去「讀取」GET 網址，結果資料就被意外刪掉了。
+
+**比喻：**REST 的網址像圖書館的分類號，`/students/3` 就是「學生區第 3 號」；動作則像借書、還書、查詢，由櫃台的不同手續（HTTP 方法）來表達。
+
+慣例上，資源名稱用**複數**（`students`，而不是 `student`）。
+
+@section 誠實回報狀態碼
+第 49 課強調過：**不要用 200 包裝所有錯誤**。在 FastAPI 裡要怎麼做到？
+
+**找不到資源 → 404。**
+```
+if student_id not in students:
+    raise HTTPException(status_code=404, detail="Student not found")
+```
+回應會是：
+```
+HTTP/1.1 404 Not Found
+{"detail": "Student not found"}
+```
+
+**刪除成功 → 204。**
+204 No Content 的意思是「成功了，但沒有內容要回傳」。所以要回傳一個空的 `Response(status_code=204)`，**不要**再附上 `{"ok": True}` 這種主體。HTTP 的規範明定 204 不能有主體，某些嚴格的工具會因此報錯。
+
+**新增成功 → 201。**
+新增學生的路由可以寫成 `@app.post("/students", status_code=201)`，並回傳新建立的學生資料。下一課會詳細介紹。
+
+@section 不用寫網頁，也能測試 API
+後端寫好了，前端網頁還沒做（第 55～58 課才會學）。要怎麼測試？
+
+**方法一：自動產生的互動文件。**
+打開瀏覽器，前往 `http://127.0.0.1:8000/docs`。FastAPI 會根據你的程式碼，**自動**產生一個漂亮的網頁（叫做 **Swagger UI**），列出所有路由。每個路由都有「Try it out」按鈕，填入參數就能直接發送請求、看到回應。
+
+這份文件依循一個叫做 **OpenAPI** 的業界標準格式。其他工具（甚至 AI 代理）都能讀懂它，知道你的 API 有哪些功能、要傳什麼參數。
+
+**方法二：curl（第 49 課）。**
+```
+curl -i http://127.0.0.1:8000/students/1
+```
+
+**方法三：自動化測試。**
+FastAPI 提供 `TestClient`，可以在 pytest（第 46 課）裡直接測試 API，**不需要真的啟動伺服器**：
+```
+from fastapi.testclient import TestClient
+from main import app
+
+client = TestClient(app)
+
+def test_get_missing_student():
+    r = client.get("/students/999")
+    assert r.status_code == 404
+```
+
+**原則：每個 API 都應該能脫離前端、單獨被測試。**這是第 44 課「核心邏輯和輸入輸出分開」的延伸：API 是核心，網頁只是其中一種使用者。
+
+@section 走一遍：從啟動到驗證
+**第一步：準備環境並啟動。**
+```
+python -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+pip install fastapi uvicorn
+python -m uvicorn main:app --reload
+```
+（`venv` 是「**虛擬環境**」：替這個專案建立一個獨立的 Python 套件空間，避免和其他專案的套件版本互相衝突。`pip install` 用來安裝套件。）
+
+記憶體中 `students` 的初始值是 `{1: Alice}`。
+
+**第二步：查詢。**
+- `GET /students` → `200`，`[{"id": 1, "name": "Alice"}]`；
+- `GET /students/1` → `200`，Alice 的資料；
+- `GET /students/999` → `404`，`{"detail": "Student not found"}`。
+
+**第三步：刪除兩次。**
+- 第一次 `DELETE /students/1` → Alice 存在，刪除，回傳 `204`（沒有主體）；
+- 第二次 `DELETE /students/1` → Alice 已經不在了，回傳 `404`。
+
+**第四步：重新啟動伺服器，再查一次。**
+按 Ctrl+C 停止，再重新啟動（或修改程式碼觸發 `--reload`）。呼叫 `GET /students/1`……
+
+**Alice 又回來了！**
+
+@section 為什麼資料會「復活」？
+因為 `students = {...}` 這個字典，只存在於 Uvicorn 這個**行程的記憶體**中（第 46、47 課）。行程一結束，記憶體清空；重新啟動時，程式從頭執行，字典又被設回初始值 `{1: Alice}`。
+
+**還有一個更隱蔽的問題：多個行程。**
+正式環境為了服務更多人，常會同時啟動好幾個 worker 行程：
+```
+uvicorn main:app --workers 4
+```
+第 47 課說過：**每個行程有自己獨立的記憶體**。所以 4 個行程就有 4 份各自獨立的 `students` 字典！
+
+結果：第一個請求被分配到 worker 1，新增了 Bob；第二個請求被分配到 worker 3，查詢 Bob → **404**，因為 worker 3 的字典裡根本沒有 Bob。
+
+**比喻：**四個櫃台各自用自己的筆記本記錄客人。你在 1 號櫃台登記，跑去 3 號櫃台查詢，當然查不到。
+
+**解法：**把資料存在**所有行程都能存取、而且不會因重啟消失**的地方，也就是**資料庫**。第 52 課就會導入 PostgreSQL。
+
+**另一個常見誤解：GitHub Pages 能跑後端嗎？**
+不能。GitHub Pages 這類「**靜態網站託管**」服務，只會把 HTML、CSS、JavaScript、圖片等檔案**原封不動**地傳給瀏覽器，不會替你啟動和維持一個常駐的 Python 行程。FastAPI 必須部署在能執行程式的環境，例如雲端主機或容器（第 63 課的 Docker）。
+
+（你現在讀的這個學習網站，就是一個純靜態網站，所以它可以放在靜態託管服務上。）
+
+@section 新手最常踩的四個陷阱
+**陷阱一：路由順序錯了。**
+```
+@app.get("/students/{student_id}")
+def get_student(student_id: int): ...
+
+@app.get("/students/me")
+def get_me(): ...
+```
+請求 `/students/me` 進來時，FastAPI **由上往下**比對，先撞上第一個路由，試圖把 `"me"` 轉成整數，失敗，直接回傳 `422`。`get_me` 永遠不會被執行到！
+
+**解法：固定的路徑（`/students/me`）要寫在有變數的路徑（`/students/{student_id}`）前面。**
+
+**陷阱二：204 還回傳主體。**
+`return {"ok": True}` 搭配 204，違反規範。應該回傳 `Response(status_code=204)`。
+
+**陷阱三：沒檢查就直接取值。**
+```
+return students[student_id]
+```
+找不到時，Python 拋出 `KeyError`，沒有人處理，FastAPI 只好回傳 **500 Internal Server Error**。用戶端只是查詢一個不存在的學生（正常情況，應該是 404），卻被當成伺服器當機，監控系統也會誤發警報。
+
+**解法：先檢查存在，不存在就主動拋出 404。**
+
+**陷阱四：以為多個 worker 會共用資料。**
+如上一節所說，每個行程的記憶體是獨立的。需要共用的資料，一定要放進資料庫或快取（第 71 課）。
+
+@section 動動腦：判斷看看
+**題一**：`uvicorn main:app --reload` 中，`uvicorn`、`main`、`app` 各是什麼？
+→ `uvicorn` 是負責接收網路請求的 ASGI 伺服器；`main` 是 `main.py` 檔案；`app` 是檔案中的 `FastAPI()` 實例。
+
+**題二**：刪除 Alice 後重新啟動伺服器，再查詢 Alice，會發生什麼事？為什麼？
+→ Alice 又出現了。因為資料只存在行程的記憶體中，重啟後恢復為程式碼中的初始值。
+
+**題三**：為什麼不能把 FastAPI 程式直接放到 GitHub Pages 上？
+→ GitHub Pages 只傳送靜態檔案，不會執行 Python 行程。
+
+**題四**：`DELETE /students/999` 時沒有先檢查就執行 `del students[999]`，會怎樣？
+→ 拋出 `KeyError`，伺服器回傳 500，把正常的「找不到」誤報成伺服器錯誤。
+
+@section 本課重點整理
+- **後端與 API**：讓其他程式透過網路呼叫你的功能。
+- **分工**：Uvicorn 負責接收網路請求；FastAPI 負責路由、參數轉換、驗證、JSON 轉換；你的函式負責業務邏輯。
+- **型別標註會被 FastAPI 實際檢查**：路徑參數轉換失敗時，自動回傳 422。
+- **REST 風格**：網址用複數名詞表示資源，HTTP 方法表示動作。不要用 GET 做修改。
+- **誠實的狀態碼**：找不到回 404、刪除成功回 204（無主體）、新增成功回 201。
+- **測試**：`/docs` 互動文件、curl、`TestClient`，不需要前端。
+- **記憶體不是資料庫**：重啟會消失、多個 worker 不共用。需要資料庫。
+- **四個陷阱**：路由順序、204 帶主體、沒檢查就取值造成 500、以為多 worker 共用資料。
+
+@term 後端
+在伺服器上執行、處理資料與業務邏輯並對外提供服務的程式（Backend）。
+@term API
+應用程式介面：讓其他程式呼叫某個系統功能的約定方式。
+@term FastAPI
+利用型別標註自動處理參數轉換、驗證與文件產生的 Python API 框架。
+@term Uvicorn
+負責監聽網路連接埠、接收 HTTP 請求並交給 FastAPI 的 ASGI 伺服器。
+@term ASGI
+Python 網頁伺服器與網頁框架之間溝通的標準介面。
+@term 裝飾器
+寫在函式上方、以 @ 開頭，用來替函式加上額外功能的語法（Decorator）。
+@term 路由
+「網址 + HTTP 方法」對應到某個處理函式的規則（Route）。
+@term 路徑參數
+網址中的變數部分，例如 /students/{student_id}（Path Parameter）。
+@term REST
+用名詞網址表示資源、用 HTTP 方法表示動作的 API 設計風格。
+@term HTTPException
+FastAPI 中用來回傳指定錯誤狀態碼與訊息的例外。
+@term Swagger UI
+FastAPI 自動產生的互動式 API 文件網頁，位於 /docs。
+@term OpenAPI
+描述 API 有哪些路由、參數與回應格式的業界標準規格。
+@term TestClient
+FastAPI 提供、可在測試中直接呼叫 API 而不需啟動伺服器的工具。
+@term 虛擬環境
+替每個專案建立獨立 Python 套件空間的機制（venv）。
+@term Worker
+處理請求的工作行程；多個 worker 之間的記憶體彼此獨立。
+@term 靜態網站託管
+只傳送 HTML、CSS、JS 等現成檔案、不執行後端程式的服務。
