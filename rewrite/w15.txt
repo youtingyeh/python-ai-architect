@@ -36,7 +36,7 @@ function formatAverage(s: Student): string {
   return s.average.toFixed(1);   // ✕ 編譯器報錯！
 }
 ```
-- `interface Student`：描述「學生資料」應有的形狀，類似第 51 課的 Pydantic 模型；
+- `interface Student`：描述「學生資料」應有的形狀，類似第 55 課的 Pydantic 模型；
 - `average: number | null`：平均成績**可能是數字，也可能是 null**（`|` 讀作「或」）；
 - `s.average.toFixed(1)`：編譯器立刻畫紅線：「`s.average` 可能是 null，不能直接呼叫 `toFixed`！」
 
@@ -49,7 +49,7 @@ function formatAverage(s: Student): string {
 ```
 開場那個白屏的錯誤，在**寫程式的當下**就被抓到了。
 
-這和第 46 課 Python 的型別提示是同樣的精神，但 TypeScript 的檢查更嚴格、更完整。
+這和第 50 課 Python 的型別提示是同樣的精神，但 TypeScript 的檢查更嚴格、更完整。
 
 **必開設定：`strict: true`。**
 在專案設定檔 `tsconfig.json` 中開啟 `strict: true`。其中最重要的是 `strictNullChecks`：它讓 `number` 和 `number | null` 被視為**不同的型別**。不開的話，編譯器會假設任何東西都不會是 null，上面的保護就失效了。
@@ -79,7 +79,7 @@ TypeScript 只在「**開發和編譯階段**」保護你：拼錯欄位名、�
 
 **比喻：**TypeScript 像建築師審查**設計圖**。設計圖審查得再嚴格，也管不到**施工現場實際送來的建材**。如果供應商送來的鋼筋規格不對，需要現場的**驗收人員**檢查。對前端來說，「供應商」就是後端 API，「現場驗收」就是下面要講的型別守衛。
 
-這呼應第 51 課的鐵律：**網路邊界外進來的資料都不可信**。對前端來說，後端回傳的資料也是「外部資料」。
+這呼應第 55 課的鐵律：**網路邊界外進來的資料都不可信**。對前端來說，後端回傳的資料也是「外部資料」。
 
 @section any、as、unknown：三種態度
 面對外部資料（例如 `res.json()` 的結果），有三種寫法：
@@ -148,7 +148,7 @@ renderStudents(raw);
 實務上，手寫守衛很繁瑣，常會用 **Zod** 這類驗證套件，寫法像前端版的 Pydantic。觀念完全相同。
 
 @section 辨識聯合型別：讓編譯器管理畫面狀態
-第 57 課提到，畫面有載入中、成功、錯誤等狀態。用 JavaScript 時，常見的寫法是幾個分開的變數：
+第 61 課提到，畫面有載入中、成功、錯誤等狀態。用 JavaScript 時，常見的寫法是幾個分開的變數：
 ```
 let isLoading = true;
 let error = null;
@@ -182,15 +182,15 @@ function render(state: LoadState) {
 **比喻：**紅綠燈一次只會亮一個顏色。用三個獨立開關控制紅、黃、綠燈，可能不小心三個同時亮；用一個「只能指向其中一格」的旋鈕，就不可能出錯。
 
 @section 前後端的型別要對齊
-前端的 `interface Student`，必須和後端 FastAPI 的 `StudentRead` 模型（第 51 課）**完全對應**：
+前端的 `interface Student`，必須和後端 FastAPI 的 `StudentRead` 模型（第 55 課）**完全對應**：
 - 欄位名稱一致（後端叫 `name`，前端就不能叫 `fullName`）；
 - 哪些欄位可能是 `null`，兩邊說法一致（後端 `average: float | None`，前端就是 `average: number | null`）。
 
 **常見錯誤：前端自己憑感覺寫一份 interface。**和後端對不上，型別檢查就形同虛設：編譯器檢查的是一份錯誤的設計圖。
 
-**更好的做法：從後端自動產生。**第 50 課提過，FastAPI 會自動產生 OpenAPI 規格（`/openapi.json`）。有工具可以讀這份規格，**自動產生**前端的 TypeScript 型別。後端一改欄位，重新產生型別，前端所有用到舊欄位的地方立刻冒出紅線。
+**更好的做法：從後端自動產生。**第 54 課提過，FastAPI 會自動產生 OpenAPI 規格（`/openapi.json`）。有工具可以讀這份規格，**自動產生**前端的 TypeScript 型別。後端一改欄位，重新產生型別，前端所有用到舊欄位的地方立刻冒出紅線。
 
-這就是第 41 課「契約優先」的具體實踐：**一份契約，兩端共用。**
+這就是第 45 課「契約優先」的具體實踐：**一份契約，兩端共用。**
 
 @section 走一遍：升級學生管理頁面
 **第一步：定義型別。**依照後端 `StudentRead`，寫出 `interface Student`。
@@ -218,7 +218,7 @@ const bad: Student = { id: 1, name: 123, age: 18, average: null };
 ```
 Type 'number' is not assignable to type 'string'.
 ```
-這行錯誤的程式碼，**在上線前就被擋下了**。把這個指令放進第 65 課的 CI 流程，每次提交程式碼都會自動檢查。
+這行錯誤的程式碼，**在上線前就被擋下了**。把這個指令放進第 69 課的 CI 流程，每次提交程式碼都會自動檢查。
 
 @section 動動腦：判斷看看
 **題一**：寫了 `interface Student` 並用 `as Student[]` 轉換 `res.json()` 的結果，執行期會自動驗證資料嗎？

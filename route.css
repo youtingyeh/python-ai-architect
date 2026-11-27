@@ -183,3 +183,6 @@ summary{cursor:pointer}
 .math-inline sub sub,.math-inline sup sup,.math-block sub sub,.math-block sup sup{font-size:.85em}
 
 .moverline{text-decoration:overline}.math-error{color:#9b2020;background:#fff0f0}.code-notice{border-left:4px solid #b17716;padding:14px;background:#fff7e8}
+.prose-code{margin:14px 0;padding:16px 18px;border-radius:10px;background:#141e24;color:#edf4fa;font:14px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
+.prose-quote{margin:14px 0;padding:12px 18px;border-left:4px solid #185c91;background:#f4f8fc;border-radius:0 8px 8px 0;color:#1e3545;white-space:pre-line}
+button.bookmark-active{background:#e7f3ec;border-color:#2f6b25;color:#21521a}

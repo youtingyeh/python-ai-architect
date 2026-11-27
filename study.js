@@ -11,7 +11,7 @@ const SYMBOLS={
   '\\cdot':'·','\\cdots':'⋯','\\dots':'…','\\to':'→','\\rightarrow':'→',
   '\\leftarrow':'←','\\mid':'∣','\\circ':'°','\\quad':' ',
   '\\sum':'∑','\\prod':'∏','\\log':'log','\\exp':'exp','\\max':'max',
-  '\\min':'min','\\arg':'arg','\\div':'÷','\\top':'⊤','\\ln':'ln','\\tanh':'tanh','\\cos':'cos','\\ldots':'…'
+  '\\min':'min','\\arg':'arg','\\div':'÷','\\top':'⊤','\\ln':'ln','\\tanh':'tanh','\\cos':'cos','\\ldots':'…','\\ell':'ℓ','\\lceil':'⌈','\\rceil':'⌉','\\lfloor':'⌊','\\rfloor':'⌋','\\pi':'π','\\odot':'⊙'
 };
 function replaceBraced(s,cmd,fn){
   const tok=cmd+'{';let idx=s.indexOf(tok);
@@ -54,6 +54,7 @@ function renderMath(tex){
   });
   s=s.replace(/\^\s*\{?\\circ\}?/g,'°');
   s=s.replace(/\\(?:left|right|bigl|bigr)\b/g,'');
+  s=s.replace(/\{,\}/g,',').replace(/\{\.\}/g,'.').replace(/\\[,;! ]/g,' ');
   s=s.replace(/\\\|/g,'‖').replace(/\\%/g,'%').replace(/\\\{/g,'{').replace(/\\\}/g,'}');
   s=replaceBraced(s,'\\text',inner=>`<span class="mtext">${inner}</span>`);
   s=replaceBraced(s,'\\mathbf',inner=>`<b>${renderMath(inner)}</b>`);
@@ -73,12 +74,22 @@ function renderMath(tex){
   return s;
 }
 function fmt(raw){
-  const escaped=esc(raw),codes=[];
-  let s=escaped.replace(/`([^`\n]+)`/g,(_,c)=>{const id=codes.length;codes.push(`<code class="inline-code">${c}</code>`);return `\u0000C${id}\u0000`;});
+  const escaped=esc(raw),blocks=[],codes=[];
+  let s=escaped.replace(/```[^\n]*\n([\s\S]*?)```/g,(_,body)=>{
+    const id=blocks.length;
+    blocks.push(`<pre class="prose-code"><code>${body.replace(/\n$/,'')}</code></pre>`);
+    return `\u0000B${id}\u0000`;
+  });
+  s=s.replace(/`([^`\n]+)`/g,(_,c)=>{const id=codes.length;codes.push(`<code class="inline-code">${c}</code>`);return `\u0000C${id}\u0000`;});
+  s=s.replace(/(?:^|\n)((?:&gt;[ \t]?[^\n]*(?:\n|$))+)/g,(m,grp)=>{
+    const inner=grp.trimEnd().split('\n').map(line=>line.replace(/^&gt;[ \t]?/,'')).join('\n');
+    return (m.startsWith('\n')?'\n':'')+`<blockquote class="prose-quote">${inner}</blockquote>`+(grp.endsWith('\n')?'\n':'');
+  });
   s=s.replace(/\$\$([\s\S]*?)\$\$/g,(_,t)=>`<div class="math-block" role="math">${renderMath(t)}</div>`);
   s=s.replace(/\$([^$\n]+)\$/g,(_,t)=>`<span class="math-inline" role="math">${renderMath(t)}</span>`);
   s=s.replace(/\*\*([^*\n]+)\*\*/g,'<strong>$1</strong>');
   s=s.replace(/\u0000C(\d+)\u0000/g,(_,id)=>codes[Number(id)]);
+  s=s.replace(/\u0000B(\d+)\u0000/g,(_,id)=>blocks[Number(id)]);
   return s;
 }
 
@@ -123,7 +134,7 @@ function termify(html,used){
       if(p.startsWith('</')){stack.pop();continue;}
       if(/^<(br|img|hr|input)\b/.test(p)||p.endsWith('/>'))continue;
       const parentSkip=stack.length?stack[stack.length-1]:false;
-      stack.push(parentSkip||/^<(code|strong|a|sub|sup)\b/.test(p)||/class="(math|term|m)/.test(p));
+      stack.push(parentSkip||/^<(pre|code|strong|a|sub|sup)\b/.test(p)||/class="(math|term|m|prose-code)/.test(p));
       continue;
     }
     const skip=stack.length?stack[stack.length-1]:false;
@@ -212,8 +223,8 @@ function show(id){
     <strong>本章學習導覽 · 正文預估約 ${st.min} 分鐘，選讀程式與拆解另約 ${st.optionalMin} 分鐘（文字 ${st.text.toLocaleString()} 字${st.codeLines?` · 程式碼 ${st.codeLines} 行`:''}）</strong>
     <ol>
       ${l.sections.map(([h],k)=>`<li><a href="#" data-sec="${k}">${fmt(h)}</a></li>`).join('')}
-      ${l.example?'<li>程式碼／量化案例與逐步拆解</li>':''}
-      ${l.solution?'<li>進階完整參考實作與驗證範本</li>':''}
+      ${l.example?'<li><a href="#" data-jump="lesson-example">程式碼／量化案例與逐步拆解</a></li>':''}
+      ${l.solution?'<li><a href="#" data-jump="lesson-solution">進階完整參考實作與驗證範本</a></li>':''}
     </ol>
     <p class="toc-quiz">🧠 本課另有 ${l.quiz.length} 題情境選擇題放在<a href="#quiz-${l.id}">自我測驗區</a>，讀完想考考自己再去。</p>
   </nav>`;
@@ -225,13 +236,13 @@ function show(id){
       </div>
       <h2>${esc(l.title)}</h2>
       ${toc}
-      <button id="reading-bookmark" type="button">回到本課上次段落</button>
+      <button id="reading-bookmark" type="button">回到本課上次段落${r.bookmark>0?'（第 '+(r.bookmark+1)+' 節）':''}</button>
     </div>
     ${GLOSS.size?'<p class="term-tip">💡 文中有<span class="term-demo">虛線底線</span>的詞，點一下可以看白話解釋。</p>':''}
-    ${l.sections.map(([h,p],k)=>`<section class="lesson-section" id="sec-${k}"><h3>${fmt(h)}</h3><div class="lesson-prose">${termify(fmt(p),used)}</div><button type="button" data-bookmark="${k}">記錄讀到這裡</button></section>`).join('')}
+    ${l.sections.map(([h,p],k)=>`<section class="lesson-section" id="sec-${k}"><h3>${fmt(h)}</h3><div class="lesson-prose">${termify(fmt(p),used)}</div><button type="button" data-bookmark="${k}" class="${r.bookmark===k&&k>0?'bookmark-active':''}">${r.bookmark===k&&k>0?'✓ 目前閱讀書籤':'記錄讀到這裡'}</button></section>`).join('')}
     ${l.codeNotice?`<p class="code-notice">範例限制：${esc(l.codeNotice)}</p>`:''}
-    ${l.example?`<section class="lesson-section example-box"><h3>範例與逐步解說</h3><p class="section-hint">請先閱讀下方範例並思考每一段的輸入、狀態變化與輸出，再逐條核對下方的拆解說明：</p><pre><code>${esc(l.example)}</code></pre><h4>逐步拆解與關鍵細節</h4><ol class="walkthrough-list">${l.walkthrough.map(t=>'<li>'+fmt(t)+'</li>').join('')}</ol></section>`:''}
-    ${l.solution?`<details class="solution-box" open><summary>進一步看完整解法與進階實作範本（不用提交作業）</summary><pre><code>${esc(l.solution)}</code></pre></details>`:''}
+    ${l.example?`<section class="lesson-section example-box" id="lesson-example"><h3>範例與逐步解說</h3><p class="section-hint">請先閱讀下方範例並思考每一段的輸入、狀態變化與輸出，再逐條核對下方的拆解說明：</p><pre><code>${esc(l.example)}</code></pre><h4>逐步拆解與關鍵細節</h4><ol class="walkthrough-list">${l.walkthrough.map(t=>'<li>'+fmt(t)+'</li>').join('')}</ol></section>`:''}
+    ${l.solution?`<details class="solution-box" id="lesson-solution" open><summary>進一步看完整解法與進階實作範本（不用提交作業）</summary><pre><code>${esc(l.solution)}</code></pre></details>`:''}
     <section class="quiz-cta">
       <div><b>🧠 想考考自己嗎？</b><span>本課有 ${l.quiz.length} 題情境選擇題，答完會顯示詳解。${passed(l)?'<strong class="ok">✓ 你已通過本課測驗</strong>':''}</span></div>
       <a class="button-link" href="#quiz-${l.id}">前往本課測驗 →</a>
@@ -246,7 +257,13 @@ function show(id){
       <div class="ref-links">${l.refs.map(([n,u])=>`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(n)} ↗</a>`).join('')}</div>
     </details>`;
   document.querySelectorAll('[data-sec]').forEach(a=>a.onclick=e=>{e.preventDefault();document.getElementById('sec-'+a.dataset.sec)?.scrollIntoView?.({behavior:'smooth'});});
-  document.querySelectorAll('[data-bookmark]').forEach(b=>b.onclick=()=>{r.bookmark=Number(b.dataset.bookmark);save();b.textContent='已記錄閱讀位置';});
+  document.querySelectorAll('[data-jump]').forEach(a=>a.onclick=e=>{e.preventDefault();document.getElementById(a.dataset.jump)?.scrollIntoView?.({behavior:'smooth'});});
+  document.querySelectorAll('[data-bookmark]').forEach(b=>b.onclick=()=>{
+    r.bookmark=Number(b.dataset.bookmark);save();
+    document.querySelectorAll('[data-bookmark]').forEach(x=>{x.classList.remove('bookmark-active');x.textContent='記錄讀到這裡';});
+    b.classList.add('bookmark-active');b.textContent='✓ 已記錄閱讀位置';
+    const rb=$('#reading-bookmark');if(rb)rb.textContent='回到本課上次段落（第 '+(r.bookmark+1)+' 節）';
+  });
   $('#reading-bookmark').onclick=()=>document.getElementById('sec-'+(r.bookmark||0))?.scrollIntoView?.({behavior:'smooth'});
   hidePop();
   $('#prev').onclick=()=>location.hash=lessons[i-1].id;
@@ -316,9 +333,11 @@ document.querySelectorAll('.track-btn').forEach(btn=>btn.addEventListener('click
 $('#stage').addEventListener('change',list);
 $('#todo').addEventListener('change',list);
 $('#search').addEventListener('input',list);
+let resumeScroll=false;
 if($('#start'))$('#start').onclick=()=>{location.hash=lessons[0].id;show(lessons[0].id);$('#lesson').scrollIntoView?.();};
 $('#resume').onclick=()=>{
   const id=state.last||lessons[0].id;
+  resumeScroll=true;
   location.hash=id;show(id);
   document.getElementById('sec-'+(record(current).bookmark||0))?.scrollIntoView?.({behavior:'smooth'});
 };
@@ -338,7 +357,12 @@ $('#import').addEventListener('change',async e=>{
         state=next;save();show(state.last);location.hash=state.last;message('進度已匯入。');
   }catch(err){message('匯入失敗：'+err.message);}finally{e.target.value='';}
 });
-window.addEventListener('hashchange',()=>{show(location.hash.slice(1));$('#lesson').scrollIntoView?.({block:'start'});});
+window.addEventListener('hashchange',()=>{
+  const toBookmark=resumeScroll;resumeScroll=false;
+  show(location.hash.slice(1));
+  if(toBookmark&&current){document.getElementById('sec-'+(record(current).bookmark||0))?.scrollIntoView?.({behavior:'smooth'});}
+  else{$('#lesson').scrollIntoView?.({block:'start'});}
+});
 show(location.hash.slice(1)||state.last);
 if($('#quiz-hub-btn'))$('#quiz-hub-btn').onclick=()=>{location.hash='quiz';};
 })();

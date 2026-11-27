@@ -3,6 +3,12 @@ import pathlib
 root=str(pathlib.Path(__file__).resolve().parent.parent)
 s=open(f'{root}/scripts/study-data.orig.js',encoding='utf8').read()
 L=json.loads(s[s.index('['):s.rstrip().rstrip(';').rindex(']')+1])
+# Filter overly generic 1-char or everyday 2-char terms that cause cross-domain false positives in global auto-highlighting
+SKIP_GLOSS_KEYS={
+    '秩','鹽','專家','來源','方法','設定','秘密','假設','取捨','命中',
+    '交易','行程','類別','實例','例外','資產','否認','模擬','訊號',
+    '提交','主體','標頭','fr'
+}
 gloss=[];seen=set()
 byid={l['id']:l for l in L}
 for f in sorted(glob.glob(f'{root}/rewrite/*.txt')):
@@ -13,10 +19,16 @@ for f in sorted(glob.glob(f'{root}/rewrite/*.txt')):
         k,a,b=blocks[i],blocks[i+1].strip(),re.sub(r'\n{3,}','\n\n',blocks[i+2].strip())
         if k=='section': secs.append([a,b])
         elif k=='term':
-            if a not in seen: seen.add(a);gloss.append([a,b])
+            norm=re.sub(r'（.*?）|\(.*?\)','',a).strip()
+            norm_key=norm.lower()
+            if not norm_key or norm in SKIP_GLOSS_KEYS or norm_key in SKIP_GLOSS_KEYS:
+                continue
+            if norm_key not in seen:
+                seen.add(norm_key);gloss.append([a,b])
         else: raise SystemExit(f'{lid}: bad block {k}')
     assert len(secs)>=5,(lid,len(secs))
-    byid[lid]['sections']=secs
+    if lid in byid:
+        byid[lid]['sections']=secs
 for l in L:
     l["quizVersion"] = hashlib.sha256(json.dumps(l["quiz"], ensure_ascii=False, sort_keys=True).encode()).hexdigest()[:16]
 for i,l in enumerate(L):

@@ -1,13 +1,13 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),{parseHTML}=require('linkedom');
 function boot(){const {window}=parseHTML(fs.readFileSync('study.html','utf8')),saved={};for(const id of ['stage','search'])Object.defineProperty(window.document.querySelector('#'+id),'value',{value:'',writable:true});const ctx={window,document:window.document,location:{hash:''},localStorage:{getItem:()=>null,setItem:(k,v)=>saved[k]=v},Blob,URL,setTimeout,confirm:()=>true};vm.createContext(ctx);for(const n of ['study-data.js','glossary.js','study.js'])vm.runInContext(fs.readFileSync(n,'utf8'),ctx);return {window,ctx,saved,d:window.document};}
-test('all 76 reading lessons render with AI-first order, 30-minute reading depth, examples, and valid questions',()=>{
+test('all 80 reading lessons render with AI-first order, 30-minute reading depth, examples, and valid questions',()=>{
   const {window,ctx,d}=boot();
-  assert.equal(window.STUDY.length,76);
-  // First 43 lessons must be the AI track, and lessons 44..76 must be w1..w33 engineering extension
-  for(let i=0;i<43;i++){
+  assert.equal(window.STUDY.length,80);
+  // First 47 lessons must be the AI track, and lessons 48..80 must be w1..w33 engineering extension
+  for(let i=0;i<47;i++){
     assert.ok(!/^w([1-9]|[12][0-9]|3[0-3])$/.test(window.STUDY[i].id),`Lesson ${i+1} (${window.STUDY[i].id}) should be AI track`);
   }
-  for(let i=43;i<76;i++){
+  for(let i=47;i<80;i++){
     assert.ok(/^w([1-9]|[12][0-9]|3[0-3])$/.test(window.STUDY[i].id),`Lesson ${i+1} (${window.STUDY[i].id}) should be post-AI engineering track`);
   }
   let count=0;
@@ -18,6 +18,9 @@ test('all 76 reading lessons render with AI-first order, 30-minute reading depth
     // 閱讀頁不放選擇題，只放前往測驗區的連結
     assert.equal(d.querySelectorAll('fieldset').length,0);
     assert.ok(d.querySelector(`a[href="#quiz-${l.id}"]`),`Lesson ${l.id} should link to its quiz`);
+    // Verify no raw $...$, unrendered LaTeX commands, {,}, or unfenced ``` appear in lesson prose outside <code> blocks
+    const lessonHtml=Array.from(d.querySelectorAll('.lesson-prose, .walkthrough-list')).map(el=>el.innerHTML.replace(/<code[\s\S]*?<\/code>/g,'')).join(' ');
+    assert.equal(/\\[a-zA-Z]+|\$[^$\n]+\$|\$|\{,\}|```/.test(lessonHtml),false,`Lesson ${l.id} prose has unrendered math, {,}, raw $, or raw code fence`);
     ctx.location.hash='#quiz-'+l.id;
     window.dispatchEvent(new window.Event('hashchange'));
     assert.equal(d.querySelectorAll('fieldset').length,l.quiz.length);
@@ -33,11 +36,10 @@ test('all 76 reading lessons render with AI-first order, 30-minute reading depth
       assert.ok(q.explanation&&q.explanation.length>=40);
       count++;
     }
-    // Verify no raw $...$ or unrendered LaTeX commands appear outside <pre><code> blocks
-    const proseHtml=Array.from(d.querySelectorAll('.lesson-prose, .walkthrough-list, .quiz')).map(el=>el.innerHTML.replace(/<code[\s\S]*?<\/code>/g,'')).join(' ');
-    assert.equal(/\\[a-zA-Z]+|\$[^$\n]+\$|\$/.test(proseHtml),false,`Lesson ${l.id} has unrendered math or raw $`);
+    const quizHtml=Array.from(d.querySelectorAll('.quiz')).map(el=>el.innerHTML.replace(/<code[\s\S]*?<\/code>/g,'')).join(' ');
+    assert.equal(/\\[a-zA-Z]+|\$[^$\n]+\$|\$|\{,\}|```/.test(quizHtml),false,`Lesson ${l.id} quiz has unrendered math, {,}, raw $, or raw code fence`);
   }
-  assert.ok(count>=228);
+  assert.ok(count>=240);
 });
 test('grading provides explanation and changing answer invalidates passed state',()=>{
   const {window,ctx,d,saved}=boot();
@@ -62,12 +64,20 @@ test('grading provides explanation and changing answer invalidates passed state'
   assert.equal(d.querySelectorAll('.wrong').length,1);
 });
 
-test('quiz hub lists every lesson; term tooltips render',()=>{
+test('quiz hub lists every lesson; term tooltips, code blocks, quotes, and math commas render',()=>{
   const {window,ctx,d}=boot();
   ctx.location.hash='#quiz';
   window.dispatchEvent(new window.Event('hashchange'));
-  assert.equal(d.querySelectorAll('.quiz-hub a').length,76);
+  assert.equal(d.querySelectorAll('.quiz-hub a').length,80);
   ctx.location.hash='#ext-tensor';
   window.dispatchEvent(new window.Event('hashchange'));
   assert.ok(d.querySelectorAll('.lesson-prose .term').length>0);
+  ctx.location.hash='#ext-orientation';
+  window.dispatchEvent(new window.Event('hashchange'));
+  assert.equal(d.querySelector('#lesson').textContent.includes('{,}'),false);
+  assert.ok(d.querySelector('#lesson').textContent.includes('10,000,000'));
+  ctx.location.hash='#ext-context';
+  window.dispatchEvent(new window.Event('hashchange'));
+  assert.ok(d.querySelectorAll('.lesson-prose pre.prose-code').length>0);
+  assert.ok(d.querySelectorAll('.lesson-prose blockquote.prose-quote').length>0);
 });

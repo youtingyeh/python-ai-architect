@@ -6,7 +6,7 @@
 <title>AI 自學教材｜零基礎也看得懂，每章 30 分鐘</title>
 <meta name="description" content="用生活比喻從零學懂 AI：從「什麼問題該交給 AI」到 ChatGPT 背後的原理、RAG、Agent。每章約 30 分鐘，附名詞小辭典與選擇題。">
 <meta property="og:title" content="AI 自學教材｜零基礎也看得懂，每章 30 分鐘">
-<meta property="og:description" content="43 堂 AI 主線課程：生活比喻、名詞小辭典、跟著算一次、選擇題詳解。整理自吳恩達、李宏毅、D2L、Karpathy 與 Microsoft 公開教材。">
+<meta property="og:description" content="47 堂 AI 主線課程：生活比喻、名詞小辭典、跟著算一次、選擇題詳解。整理自吳恩達、李宏毅、D2L、Karpathy 與 Microsoft 公開教材。">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#f4f1ea">
 <link rel="stylesheet" href="route.css">
@@ -34,7 +34,7 @@
 
   <section class="welcome" aria-label="第一次來看這裡">
     <h2>👋 第一次來？這樣用就好</h2>
-    <p>這是一份整理自五套國際知名公開 AI 課程的中文自學講義，共 43 堂 AI 主線課。內容全部在網站裡，不用註冊、不用下載。</p>
+    <p>這是一份整理自五套國際知名公開 AI 課程的中文自學講義，共 47 堂 AI 主線課。內容全部在網站裡，不用註冊、不用下載。</p>
     <div class="welcome-steps">
       <div><b>① 從第 1 課開始</b>按下方「從第 1 課開始」或「繼續上次進度」。課程有順序，前面的觀念後面會用到。</div>
       <div><b>② 慢慢讀正文</b>每課約 30 分鐘，分成幾個小節，可以分幾次讀完。<span class="term-demo">虛線底線</span>的詞點一下就有解釋。</div>
@@ -56,8 +56,8 @@
       </div>
       <div class="track-callout">
         <h3>課程安排</h3>
-        <p><strong>AI 主線（第 1～43 課）— 建議從這裡開始</strong><br>先學會判斷「什麼問題適合交給 AI」，接著理解機器怎麼「學習」，再一路拆開 ChatGPT 這類語言模型的運作原理，最後學會怎麼把生成式 AI 用在真實應用（提示詞、RAG 知識庫問答、讓 AI 呼叫工具、AI 代理人、安全與評估）。</p>
-        <p><strong>工程延伸（第 44～76 課）— 想自己動手做系統再看</strong><br>Python、網站與資料庫、系統架構。偏工程師取向，非必讀。</p>
+        <p><strong>AI 主線（第 1～47 課）— 建議從這裡開始</strong><br>先學會判斷「什麼問題適合交給 AI」，接著理解機器怎麼「學習」，再一路拆開 ChatGPT 這類語言模型的運作原理，最後學會把生成式 AI 用在真實應用（提示詞、RAG 知識庫問答、函式呼叫、MCP 工具協議、AI 代理人、後訓練與推理模型、多模態、自我成長、安全與評估）。</p>
+        <p><strong>工程延伸（第 48～80 課）— 想自己動手做系統再看</strong><br>Python、網站與資料庫、系統架構。偏工程師取向，非必讀。</p>
       </div>
     </div>
 
@@ -81,7 +81,7 @@
             <tr>
               <td><strong>李宏毅 — 機器學習與生成式 AI</strong></td>
               <td><a href="https://speech.ee.ntu.edu.tw/~hylee/GenAI-ML/2025-fall.php" target="_blank" rel="noopener">生成式 AI 與機器學習導論 ↗</a><br><a href="https://speech.ee.ntu.edu.tw/~hylee/ml/2026-spring.php" target="_blank" rel="noopener">機器學習 2026 ↗</a></td>
-              <td><strong>第 5～7、9 課 &amp; 第 38～40 課（模型訓練評估 &amp; 2026 Agent 進階）：</strong>機器學習三步驟觀念、資料切分與洩漏、分類評估指標、過擬合診斷、Context Engineering 上下文工程、Agent Harness 外部驗證迴圈、KV Cache 推論加速與記憶體代價</td>
+              <td><strong>第 5～7、9 課 &amp; 第 38～42、44 課（模型訓練評估 &amp; 2025/2026 進階）：</strong>機器學習三步驟觀念、資料切分與洩漏、分類評估指標、過擬合診斷、Context Engineering 上下文工程、Agent Harness 外部驗證迴圈、KV Cache 與 Flash Attention 推論加速、後訓練對齊（RLHF/DPO/GRPO）與推理模型、多模態 VLM 與語音模型、Self-Improving 自我成長</td>
             </tr>
             <tr>
               <td><strong>李沐等作者 —《動手學深度學習》</strong></td>
@@ -90,13 +90,13 @@
             </tr>
             <tr>
               <td><strong>Andrej Karpathy — Neural Networks: Zero to Hero</strong></td>
-              <td><a href="https://karpathy.ai/zero-to-hero.html" target="_blank" rel="noopener">官方課程網站 ↗</a></td>
-              <td><strong>第 11～15 課（模型內部與語言模型）：</strong>micrograd 純量反向傳播與鏈式法則、makemore Bigram 統計語言模型與 NLL 損失、UTF-8 與 BPE Tokenizer 演算法、Q/K/V 自注意力與 Causal Mask 因果遮罩、小型 GPT 架構與自回歸訓練／生成</td>
+              <td><a href="https://karpathy.ai/zero-to-hero.html" target="_blank" rel="noopener">官方課程網站 ↗</a><br><a href="https://github.com/karpathy/nn-zero-to-hero" target="_blank" rel="noopener">官方程式庫 ↗</a></td>
+              <td><strong>第 11～15 課 &amp; 第 44 課（模型內部、語言模型與規模化訓練）：</strong>micrograd 純量反向傳播與鏈式法則、makemore Bigram 統計語言模型與 NLL 損失、UTF-8 與 BPE Tokenizer 演算法、Q/K/V 自注意力與 Causal Mask 因果遮罩、小型 GPT 架構與自回歸生成、BF16 混合精度／Warmup＋Cosine／RMSNorm／Scaling Laws</td>
             </tr>
             <tr>
               <td><strong>Microsoft — Generative AI for Beginners</strong></td>
-              <td><a href="https://github.com/microsoft/generative-ai-for-beginners/blob/main/translations/zh-TW/README.md" target="_blank" rel="noopener">繁體中文教材 ↗</a><br><a href="https://github.com/microsoft/generative-ai-for-beginners" target="_blank" rel="noopener">英文原始教材 ↗</a></td>
-              <td><strong>第 16～37 課（生成式 AI 應用完整 22 單元）：</strong>金鑰與後端代理架構、LLM 生成與幻覺機制、模型選型矩陣、負責任 AI、Prompt 結構、Few-Shot 與任務拆解、文字生成 API 容錯、多輪聊天狀態、向量搜尋、RAG 兩段式診斷、Function Calling 安全沙箱、AI UX、Prompt Injection 防禦、LLMOps 回歸評估、Model Card 與開源權重、微調 vs RAG 決策、SLM 量化部署、AI Agent 行動迴圈、影像生成驗收、Low-Code 取捨、Mistral 與 Meta Llama 模型家族選型</td>
+              <td><a href="https://github.com/microsoft/generative-ai-for-beginners/blob/main/translations/zh-TW/README.md" target="_blank" rel="noopener">繁體中文教材 ↗</a><br><a href="https://github.com/microsoft/generative-ai-for-beginners" target="_blank" rel="noopener">英文原始教材 ↗</a><br><a href="https://github.com/microsoft/ai-agents-for-beginners" target="_blank" rel="noopener">AI Agents 延伸教材 ↗</a></td>
+              <td><strong>第 16～37 課 &amp; 第 43 課（生成式 AI 應用完整 22 單元＋MCP 現代協議）：</strong>金鑰與後端代理架構、LLM 生成與幻覺機制、模型選型矩陣、負責任 AI、Prompt 結構、Few-Shot 與任務拆解、文字生成 API 容錯、多輪聊天狀態、向量搜尋、RAG 兩段式診斷、Function Calling 安全沙箱、AI UX、Prompt Injection 防禦、LLMOps 回歸評估、Model Card 與開源權重、微調 vs RAG 決策、SLM 量化部署、AI Agent 行動迴圈、影像生成驗收、Low-Code 取捨、Mistral 與 Meta 模型選型、MCP 工具協議與安全閘道</td>
             </tr>
           </tbody>
         </table>
@@ -107,10 +107,10 @@
   <section class="dashboard">
     <div class="progress-box">
       <div class="progress-stats">
-        <b id="count">0 / 76 課通過</b>
-        <span id="ai-count" class="track-stat">AI 主線：0 / 43 課 · 後續工程延伸：0 / 33 課</span>
+        <b id="count">0 / 80 課通過</b>
+        <span id="ai-count" class="track-stat">AI 主線：0 / 47 課 · 後續工程延伸：0 / 33 課</span>
       </div>
-      <progress id="progress" max="76" value="0"></progress>
+      <progress id="progress" max="80" value="0"></progress>
     </div>
     <button id="start" type="button">從第 1 課開始</button>
     <button id="resume" class="primary" type="button">繼續上次進度 →</button>
@@ -123,8 +123,8 @@
   <div class="workspace">
     <aside>
       <div class="track-tabs" role="group" aria-label="課程範圍快速篩選">
-        <button type="button" class="track-btn active" data-track="all">全部 (76)</button>
-        <button type="button" class="track-btn" data-track="ai">AI 主線 (43)</button>
+        <button type="button" class="track-btn active" data-track="all">全部 (80)</button>
+        <button type="button" class="track-btn" data-track="ai">AI 主線 (47)</button>
         <button type="button" class="track-btn" data-track="eng">後續工程 (33)</button>
       </div>
       <label for="stage">學習階段</label>

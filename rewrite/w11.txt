@@ -16,7 +16,7 @@
 - 效能不靠猜，要用 `EXPLAIN ANALYZE` **實際量測**。
 
 @section 交易：同生共死的一組操作
-第 52 課初步介紹過交易，這裡深入。
+第 56 課初步介紹過交易，這裡深入。
 
 在 SQL 中，交易長這樣：
 ```
@@ -31,7 +31,7 @@ COMMIT;
 
 **比喻：**網購結帳。「扣款」、「扣庫存」、「建立訂單」三件事要嘛全部完成，要嘛全部沒發生。不能錢扣了、訂單卻沒建立；也不能訂單建立了、庫存卻沒扣，結果賣出不存在的商品。
 
-在 Python 中，第 52 課的 `with psycopg.connect() as conn:` 區塊就是一個交易：正常結束自動 COMMIT，拋出例外自動 ROLLBACK。
+在 Python 中，第 56 課的 `with psycopg.connect() as conn:` 區塊就是一個交易：正常結束自動 COMMIT，拋出例外自動 ROLLBACK。
 
 @section ACID：交易的四個承諾
 資料庫對交易做出四個承諾，取英文字首簡稱 **ACID**。
@@ -90,7 +90,7 @@ PostgreSQL 預設的索引結構叫 **B-Tree**（平衡樹）。不用深究細�
 ```
 CREATE INDEX students_name_idx ON students(name);
 ```
-第 52 課提過：`PRIMARY KEY` 和 `UNIQUE` 會**自動**建立索引，不用另外建。
+第 56 課提過：`PRIMARY KEY` 和 `UNIQUE` 會**自動**建立索引，不用另外建。
 
 @section 索引的代價：為什麼不每個欄位都建？
 知道索引能加速後，很多人的第一反應是：「那每個欄位都建索引就好啦！」
@@ -165,7 +165,7 @@ COMMIT
 ```
 current transaction is aborted, commands ignored until end of transaction block
 ```
-如果你用 `try...except` 把第一個錯誤吞掉（第 45 課說過別這樣做），然後繼續執行下一條 SQL，就會一直看到這個莫名其妙的錯誤。**出錯就 ROLLBACK，重新開始。**
+如果你用 `try...except` 把第一個錯誤吞掉（第 49 課說過別這樣做），然後繼續執行下一條 SQL，就會一直看到這個莫名其妙的錯誤。**出錯就 ROLLBACK，重新開始。**
 
 **陷阱三：讓索引失效的寫法。**
 索引建在 `name` 上，但查詢寫成：
@@ -190,7 +190,7 @@ current transaction is aborted, commands ignored until end of transaction block
 答：在 Python 中通常不用。`with psycopg.connect() as conn:` 已經幫你包好了；之後學的 ORM（例如 SQLAlchemy）也有類似的 `session` 機制。重點不是語法，而是**你要清楚知道交易的邊界在哪裡**：哪些操作在同一個交易裡、什麼時候提交。
 
 **問：隔離等級要怎麼選？**
-答：初學階段用 PostgreSQL 預設的「讀已提交」（Read Committed）即可，它能避免讀到別人還沒提交的資料。真正需要防止並行衝突的地方（扣款、扣庫存、搶座位），再針對那幾段使用 `SELECT ... FOR UPDATE`，或用資料庫約束（第 53 課的組合唯一）直接擋住重複。與其全域調高隔離等級，不如精準保護關鍵的幾個地方。
+答：初學階段用 PostgreSQL 預設的「讀已提交」（Read Committed）即可，它能避免讀到別人還沒提交的資料。真正需要防止並行衝突的地方（扣款、扣庫存、搶座位），再針對那幾段使用 `SELECT ... FOR UPDATE`，或用資料庫約束（第 57 課的組合唯一）直接擋住重複。與其全域調高隔離等級，不如精準保護關鍵的幾個地方。
 
 @section 動動腦：判斷看看
 **題一**：轉帳交易中，入帳成功、扣款卻違反 `CHECK` 失敗，ROLLBACK 後兩個帳戶的餘額是多少？

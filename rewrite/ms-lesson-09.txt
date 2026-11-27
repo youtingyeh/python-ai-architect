@@ -155,7 +155,7 @@ $$\hat{\epsilon} = \epsilon_{\text{uncond}} + w \cdot (\epsilon_{\text{cond}} - 
 - **工具：不要用擴散模型直接畫！**改成請語言模型寫出**繪圖程式碼**，例如：
   - **Mermaid**、**Graphviz**：用文字描述就能畫流程圖、架構圖；
   - **SVG**：網頁用的向量圖格式；
-  - **Matplotlib**：Python 的畫圖套件（第 44 課之後的工程篇會用到）。
+  - **Matplotlib**：Python 的畫圖套件（第 48 課之後的工程篇會用到）。
 
   再由這些工具**確定性地**畫出來：同樣的程式碼，永遠畫出同樣的圖。
 - **驗收重點**：

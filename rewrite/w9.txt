@@ -1,7 +1,7 @@
 @section 開場：為什麼字典和 JSON 檔不夠用了
 到目前為止，我們的學生資料放在兩個地方：
-- 第 50 課：Python 字典 `students = {}`，存在記憶體裡；
-- 第 46 課：JSON 檔案 `records.json`，存在硬碟上。
+- 第 54 課：Python 字典 `students = {}`，存在記憶體裡；
+- 第 50 課：JSON 檔案 `records.json`，存在硬碟上。
 
 兩者在練習時都很好用，但一上線就會遇到三個大問題。
 
@@ -48,13 +48,13 @@ CREATE TABLE students (
 - 保證**唯一**：不會有兩個學生的 `id` 一樣；
 - 保證**不是空的**：每筆資料一定有 `id`。
 
-`GENERATED ALWAYS AS IDENTITY` 的意思是：「`id` 由資料庫**自動依序產生**（1、2、3……），使用者不能自己指定」。這正好呼應第 51 課：不讓使用者自己填 `id`，防止批量賦值。
+`GENERATED ALWAYS AS IDENTITY` 的意思是：「`id` 由資料庫**自動依序產生**（1、2、3……），使用者不能自己指定」。這正好呼應第 55 課：不讓使用者自己填 `id`，防止批量賦值。
 
 **二、`NOT NULL`——這欄一定要填。**
 `name text NOT NULL`：名字不能是空值。少了名字的學生資料，寫不進去。
 
 **三、`UNIQUE`——這欄不能重複。**
-`email text UNIQUE`：兩個學生不能用同一個 email 註冊。資料庫會在底層自動幫這欄建立「索引」（第 54 課），讓檢查重複變得很快。
+`email text UNIQUE`：兩個學生不能用同一個 email 註冊。資料庫會在底層自動幫這欄建立「索引」（第 58 課），讓檢查重複變得很快。
 
 **四、`CHECK`——自訂業務規則。**
 `CHECK (age BETWEEN 0 AND 120)`：年齡必須在 0 到 120 之間。
@@ -70,7 +70,7 @@ ERROR: new row for relation "students" violates check constraint "students_age_c
 **比喻：**約束就像大樓門禁。不管你從大門、側門、地下停車場進來，刷卡機的規則都一樣，沒卡就是進不去。
 
 @section 為什麼要檢查兩次？應用層 vs. 資料庫層
-這是很多初學者的疑問：「第 51 課已經用 Pydantic 檢查過 `0 <= age <= 120`，為什麼資料庫還要再寫一次 `CHECK`？這不是重複嗎？」
+這是很多初學者的疑問：「第 55 課已經用 Pydantic 檢查過 `0 <= age <= 120`，為什麼資料庫還要再寫一次 `CHECK`？這不是重複嗎？」
 
 答案是：**兩層檢查的目的不同。**
 
@@ -79,7 +79,7 @@ ERROR: new row for relation "students" violates check constraint "students_age_c
 
 **資料庫約束的目的：保證「不管從哪裡來」的資料都合規。**
 一個成熟的系統，**絕對不會只有一個 API 在寫資料庫**。未來可能還有：
-- 背景排程程式（第 72 課的佇列工作者）；
+- 背景排程程式（第 76 課的佇列工作者）；
 - 資料搬遷腳本；
 - AI 批次匯入工具；
 - 工程師半夜緊急修資料時，手動打的 SQL 指令；
@@ -92,7 +92,7 @@ ERROR: new row for relation "students" violates check constraint "students_age_c
 **比喻：**Pydantic 像餐廳門口的服務生，看到你沒訂位會客氣地說明；資料庫約束像消防法規的最大容納人數，不管你從哪個門進來，超過就是不能進。
 
 @section 四個基本動作：CRUD 的 SQL 寫法
-第 44 課學過 CRUD（新增、讀取、修改、刪除）。這裡是對應的 SQL。
+第 48 課學過 CRUD（新增、讀取、修改、刪除）。這裡是對應的 SQL。
 
 **新增（Create）：`INSERT`**
 ```
@@ -110,7 +110,7 @@ ORDER BY name;
 ```
 從 students 表中，挑出年齡大於等於 20 的學生，只要 id、name、age 三欄，依名字排序。
 
-建議**明確列出要的欄位**，而不是寫 `SELECT *`（全部欄位）。理由和第 51 課的 `response_model` 一樣：表裡日後新增了敏感欄位，`SELECT *` 會不知不覺把它撈出來。
+建議**明確列出要的欄位**，而不是寫 `SELECT *`（全部欄位）。理由和第 55 課的 `response_model` 一樣：表裡日後新增了敏感欄位，`SELECT *` 會不知不覺把它撈出來。
 
 **修改（Update）：`UPDATE`**
 ```
@@ -144,13 +144,13 @@ def get_student(student_id: int):
 ```
 逐行說明：
 - `os.environ["DATABASE_URL"]`：連線字串（包含帳號、密碼、主機位址）從**環境變數**讀取，**絕對不寫死在程式碼裡**（第 47、64 課）；
-- `psycopg.connect(...)`：建立和資料庫的連線（底層是第 49 課的 TCP 連線）；
+- `psycopg.connect(...)`：建立和資料庫的連線（底層是第 53 課的 TCP 連線）；
 - `cursor`（游標）：用來送出 SQL、取回結果的物件；
 - `execute(SQL, 參數)`：執行查詢；
 - `fetchone()`：取回一筆結果，找不到則是 `None`。
 
 **交易：要嘛全部完成，要嘛全部取消。**
-**交易**（Transaction）是資料庫最重要的概念之一（第 54 課會深入）。先記住：
+**交易**（Transaction）是資料庫最重要的概念之一（第 58 課會深入）。先記住：
 
 `with psycopg.connect(...) as conn:` 這個區塊結束時：
 - **一切正常** → 自動 **COMMIT**（提交），所有修改正式生效；
@@ -202,7 +202,7 @@ cur.execute(
 這個觀念也和第 28 課的提示注入一脈相承：**混在一起的「指令」和「資料」，就是注入攻擊的溫床。**SQL 有參數化查詢能徹底分開兩者；LLM 目前沒有這麼完美的機制，所以第 28 課要靠縱深防禦。
 
 @section 走一遍：接上資料庫的學生 API
-把第 50 課的 FastAPI 服務正式接上 PostgreSQL：
+把第 54 課的 FastAPI 服務正式接上 PostgreSQL：
 
 **第一步：建表。**執行上面的 `CREATE TABLE`。
 
@@ -222,7 +222,7 @@ def create_student(data: StudentCreate):
             row = cur.fetchone()
     return {"id": row[0], "name": row[1], "age": row[2]}
 ```
-Pydantic 先擋（第 51 課）、參數化查詢防注入、交易自動提交、`RETURNING` 拿回新的 `id`。
+Pydantic 先擋（第 55 課）、參數化查詢防注入、交易自動提交、`RETURNING` 拿回新的 `id`。
 
 **第四步：驗證持久化。**新增幾筆資料 → **關掉伺服器、重新啟動** → 再呼叫 `GET /students`。資料都還在！我們正式告別「一重啟就失憶」的時代。
 
