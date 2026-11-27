@@ -1,0 +1,283 @@
+@section 開場：為什麼字典和 JSON 檔不夠用了
+到目前為止，我們的學生資料放在兩個地方：
+- 第 50 課：Python 字典 `students = {}`，存在記憶體裡；
+- 第 46 課：JSON 檔案 `records.json`，存在硬碟上。
+
+兩者在練習時都很好用，但一上線就會遇到三個大問題。
+
+**問題一：失憶。**記憶體字典在伺服器重新啟動的瞬間就全部消失。而上線的伺服器會因為部署新版本、當機、主機維護而頻繁重啟。
+
+**問題二：搶著寫，寫壞檔案。**假設十個使用者同時修改 `records.json`。行程 A 讀進檔案、改一筆；同時行程 B 也讀進同一份舊檔案、改另一筆；A 先寫回去，B 再寫回去，**A 的修改就被 B 整個蓋掉了**。這種「誰先誰後決定結果」的錯誤，叫做**競態條件**（Race Condition）。
+
+**問題三：找資料太慢。**JSON 檔有十萬筆學生、50MB 大，要找一個人，每次都得把整個檔案讀進記憶體、從頭翻到尾。
+
+**關聯式資料庫**（Relational Database）就是為了解決這些問題而生的。這一課以業界最受歡迎的開源資料庫 **PostgreSQL**（簡稱 Postgres）為例，學：
+1. 資料表、列、欄是什麼；
+2. 四種約束：讓資料庫幫你守住規則；
+3. 為什麼 Pydantic 驗證過了，資料庫還要再檢查一次；
+4. 四個基本 SQL 動作：新增、查詢、修改、刪除；
+5. 用 Python 連接資料庫，以及**交易**的自動提交與回滾；
+6. 資料庫最危險的漏洞：**SQL 注入**。
+
+順帶一提：PostgreSQL 加上 `pgvector` 外掛，還能存第 24 課的向量嵌入，做第 25 課的 RAG 檢索。所以它不只是工程篇的主角，也是 AI 應用常見的基礎設施。
+
+@section 資料表：一張規則很嚴格的試算表
+關聯式資料庫把資料存在**資料表**（Table）裡。你可以先把它想像成一張 Excel 試算表：
+- 每一**列**（Row）是一筆資料，例如一位學生；
+- 每一**欄**（Column）是一種屬性，例如名字、年齡。
+
+但它和 Excel 有個關鍵差別：**規則很嚴格**。Excel 的「年齡」欄你想打「十八歲」、「不知道」、留空都可以；資料庫的每一欄在建表時就**綁定了型別和規則**，不符合的資料**一律寫不進去**。
+
+用 SQL 建立學生表：
+```
+CREATE TABLE students (
+    id   bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    name text    NOT NULL,
+    age  integer NOT NULL CHECK (age BETWEEN 0 AND 120),
+    email text   UNIQUE
+);
+```
+**SQL**（Structured Query Language，結構化查詢語言）是和關聯式資料庫溝通的標準語言。它讀起來很像英文句子：「建立一張叫 students 的表，有以下欄位……」。
+
+這種「建立、修改表結構」的 SQL，叫做 **DDL**（資料定義語言）；之後新增、查詢資料的 SQL，則叫 **DML**（資料操作語言）。
+
+@section 四種約束：讓資料庫當守門員
+上面的建表語句裡，藏了四種**約束**（Constraint），每一種守住一條規則。
+
+**一、`PRIMARY KEY`（主鍵）——每筆資料的身分證字號。**
+- 保證**唯一**：不會有兩個學生的 `id` 一樣；
+- 保證**不是空的**：每筆資料一定有 `id`。
+
+`GENERATED ALWAYS AS IDENTITY` 的意思是：「`id` 由資料庫**自動依序產生**（1、2、3……），使用者不能自己指定」。這正好呼應第 51 課：不讓使用者自己填 `id`，防止批量賦值。
+
+**二、`NOT NULL`——這欄一定要填。**
+`name text NOT NULL`：名字不能是空值。少了名字的學生資料，寫不進去。
+
+**三、`UNIQUE`——這欄不能重複。**
+`email text UNIQUE`：兩個學生不能用同一個 email 註冊。資料庫會在底層自動幫這欄建立「索引」（第 54 課），讓檢查重複變得很快。
+
+**四、`CHECK`——自訂業務規則。**
+`CHECK (age BETWEEN 0 AND 120)`：年齡必須在 0 到 120 之間。
+
+試試看塞一筆違規資料：
+```
+INSERT INTO students (name, age) VALUES ('Bad', -1);
+```
+資料庫會立刻拒絕：
+```
+ERROR: new row for relation "students" violates check constraint "students_age_check"
+```
+**比喻：**約束就像大樓門禁。不管你從大門、側門、地下停車場進來，刷卡機的規則都一樣，沒卡就是進不去。
+
+@section 為什麼要檢查兩次？應用層 vs. 資料庫層
+這是很多初學者的疑問：「第 51 課已經用 Pydantic 檢查過 `0 <= age <= 120`，為什麼資料庫還要再寫一次 `CHECK`？這不是重複嗎？」
+
+答案是：**兩層檢查的目的不同。**
+
+**Pydantic（應用層）的目的：給使用者友善的錯誤訊息。**
+在請求一進門就擋下，回傳清楚的 422，告訴前端「年齡欄位錯了」，讓使用者馬上修正。
+
+**資料庫約束的目的：保證「不管從哪裡來」的資料都合規。**
+一個成熟的系統，**絕對不會只有一個 API 在寫資料庫**。未來可能還有：
+- 背景排程程式（第 72 課的佇列工作者）；
+- 資料搬遷腳本；
+- AI 批次匯入工具；
+- 工程師半夜緊急修資料時，手動打的 SQL 指令；
+- 另一個團隊寫的另一個服務。
+
+這些管道**都不會經過你的 Pydantic 模型**。如果只有應用層檢查，任何一條管道寫錯，髒資料就進了資料庫，而且可能好幾個月後才被發現。
+
+**資料庫是整個系統共用的最後一道防線。**不管資料從哪條路進來，違規的就是落不了地。
+
+**比喻：**Pydantic 像餐廳門口的服務生，看到你沒訂位會客氣地說明；資料庫約束像消防法規的最大容納人數，不管你從哪個門進來，超過就是不能進。
+
+@section 四個基本動作：CRUD 的 SQL 寫法
+第 44 課學過 CRUD（新增、讀取、修改、刪除）。這裡是對應的 SQL。
+
+**新增（Create）：`INSERT`**
+```
+INSERT INTO students (name, age)
+VALUES ('Alice', 18)
+RETURNING id, name, age;
+```
+`RETURNING` 是 PostgreSQL 好用的功能：新增後**順便把結果傳回來**，包括資料庫自動產生的 `id`。一次往返就完成，不用新增完再查一次。
+
+**查詢（Read）：`SELECT`**
+```
+SELECT id, name, age FROM students
+WHERE age >= 20
+ORDER BY name;
+```
+從 students 表中，挑出年齡大於等於 20 的學生，只要 id、name、age 三欄，依名字排序。
+
+建議**明確列出要的欄位**，而不是寫 `SELECT *`（全部欄位）。理由和第 51 課的 `response_model` 一樣：表裡日後新增了敏感欄位，`SELECT *` 會不知不覺把它撈出來。
+
+**修改（Update）：`UPDATE`**
+```
+UPDATE students SET age = 19 WHERE id = 1;
+```
+**務必注意 `WHERE`！**如果忘了寫 `WHERE id = 1`，這句會把**全部學生**的年齡都改成 19。這是資料庫操作中最經典的慘劇之一。
+
+**刪除（Delete）：`DELETE`**
+```
+DELETE FROM students WHERE id = 3;
+```
+同樣，**漏了 `WHERE` 就是清空整張表**。很多工程師的習慣是：先寫 `SELECT ... WHERE ...` 確認會影響哪些資料，確認無誤後，再把 `SELECT` 換成 `DELETE`。
+
+@section 用 Python 連接資料庫
+Python 透過「**驅動程式**」和 PostgreSQL 溝通，官方推薦的是 `psycopg`（第 3 代）。
+
+```
+import os
+import psycopg
+
+DATABASE_URL = os.environ["DATABASE_URL"]
+
+def get_student(student_id: int):
+    with psycopg.connect(DATABASE_URL) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT id, name, age FROM students WHERE id = %s",
+                (student_id,),
+            )
+            return cur.fetchone()
+```
+逐行說明：
+- `os.environ["DATABASE_URL"]`：連線字串（包含帳號、密碼、主機位址）從**環境變數**讀取，**絕對不寫死在程式碼裡**（第 47、64 課）；
+- `psycopg.connect(...)`：建立和資料庫的連線（底層是第 49 課的 TCP 連線）；
+- `cursor`（游標）：用來送出 SQL、取回結果的物件；
+- `execute(SQL, 參數)`：執行查詢；
+- `fetchone()`：取回一筆結果，找不到則是 `None`。
+
+**交易：要嘛全部完成，要嘛全部取消。**
+**交易**（Transaction）是資料庫最重要的概念之一（第 54 課會深入）。先記住：
+
+`with psycopg.connect(...) as conn:` 這個區塊結束時：
+- **一切正常** → 自動 **COMMIT**（提交），所有修改正式生效；
+- **中途發生例外** → 自動 **ROLLBACK**（回滾），區塊內**已經做的修改全部取消**。
+
+**比喻：**轉帳。從 A 帳戶扣 100 元、B 帳戶加 100 元，這兩步必須「同生共死」。如果扣完 A 之後系統當機，B 卻沒加到，錢就憑空消失了。交易保證：要嘛兩步都完成，要嘛兩步都沒發生。
+
+沒用 `with` 區塊時，常見的錯誤是**忘了 `conn.commit()`**：程式跑完沒報錯，但修改其實從未生效，重開資料庫一看，資料根本沒寫進去。
+
+@section 最危險的漏洞：SQL 注入
+這是資料庫相關**排名第一**的資安漏洞，請務必徹底理解。
+
+**錯誤寫法：用字串拼接組 SQL。**
+```
+name = request_input   # 使用者輸入的名字
+cur.execute(f"SELECT * FROM students WHERE name = '{name}'")
+```
+正常使用者輸入 `Alice`，SQL 變成：
+```
+SELECT * FROM students WHERE name = 'Alice'
+```
+沒問題。但攻擊者輸入：`' OR '1'='1`，SQL 變成：
+```
+SELECT * FROM students WHERE name = '' OR '1'='1'
+```
+`'1'='1'` 永遠成立，結果**整張表的資料都被撈出來**。更惡劣的輸入如 `'; DROP TABLE students; --`，可能**直接刪掉整張表**。
+
+**問題的本質：**使用者的輸入被當成「**程式碼**」執行，而不是單純的「**資料**」。攻擊者的引號「跳出」了字串的範圍，改寫了 SQL 的結構。
+
+**正確寫法：參數化查詢。**
+```
+cur.execute(
+    "SELECT id, name FROM students WHERE name = %s",
+    (name,),
+)
+```
+這裡的 `%s` **不是** Python 的字串格式化，而是給驅動程式看的「**佔位符**」。SQL 的結構和參數值**分開**傳給資料庫：資料庫先確定 SQL 的結構，再把參數**當成純資料**填進去。不管參數裡有什麼引號、分號，都只會被當成「一個很怪的名字」去比對，不可能改變 SQL 的意思。
+
+**比喻：**字串拼接像讓客人自己在點菜單上手寫，他可以寫「一碗麵，然後把收銀機的錢都給我」；參數化查詢像給客人一張格式固定的點菜單，只有「品項」和「數量」兩個格子，他寫什麼都只會被當成品項名稱。
+
+**記住三個「絕對不要」：**不要用 f-string、不要用 `+`、不要用 `%` 運算子把使用者輸入拼進 SQL。
+
+**一個常見小陷阱：單一元素的 tuple 要加逗號。**
+- `(student_id)`：在 Python 裡只是**加了括號的整數**，不是 tuple；
+- `(student_id,)`：這才是只有一個元素的 tuple。
+
+這個逗號漏掉，驅動程式會報型別錯誤。
+
+這個觀念也和第 28 課的提示注入一脈相承：**混在一起的「指令」和「資料」，就是注入攻擊的溫床。**SQL 有參數化查詢能徹底分開兩者；LLM 目前沒有這麼完美的機制，所以第 28 課要靠縱深防禦。
+
+@section 走一遍：接上資料庫的學生 API
+把第 50 課的 FastAPI 服務正式接上 PostgreSQL：
+
+**第一步：建表。**執行上面的 `CREATE TABLE`。
+
+**第二步：放入初始資料。**新增 Alice（18 歲）、Bob（21 歲）、Charlie（25 歲）。故意塞一筆 `age = -1`，確認被 `CHECK` 拒絕。
+
+**第三步：改寫路由。**
+```
+@app.post("/students", status_code=201, response_model=StudentRead)
+def create_student(data: StudentCreate):
+    with psycopg.connect(DATABASE_URL) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO students (name, age) VALUES (%s, %s) "
+                "RETURNING id, name, age",
+                (data.name, data.age),
+            )
+            row = cur.fetchone()
+    return {"id": row[0], "name": row[1], "age": row[2]}
+```
+Pydantic 先擋（第 51 課）、參數化查詢防注入、交易自動提交、`RETURNING` 拿回新的 `id`。
+
+**第四步：驗證持久化。**新增幾筆資料 → **關掉伺服器、重新啟動** → 再呼叫 `GET /students`。資料都還在！我們正式告別「一重啟就失憶」的時代。
+
+@section 動動腦：判斷看看
+**題一**：Pydantic 已經檢查了年齡範圍，資料庫還要加 `CHECK` 嗎？
+→ 要。資料庫是所有寫入管道共用的最後防線，背景程式、匯入腳本、手動 SQL 都不會經過 Pydantic。
+
+**題二**：下面哪一種寫法能防 SQL 注入？
+(a) `cur.execute(f"... WHERE id = {sid}")`
+(b) `cur.execute("... WHERE id = %s" % sid)`
+(c) `cur.execute("... WHERE id = %s", (sid,))`
+→ (c)。只有它把參數交給驅動程式分開處理；(b) 雖然也用 `%s`，但是 Python 的字串格式化，本質上還是拼接。
+
+**題三**：在 `with psycopg.connect() as conn:` 區塊裡，第一個 UPDATE 成功、第二個 UPDATE 違反 CHECK 拋出例外，結果如何？
+→ 整個區塊回滾，**連第一個 UPDATE 也一起取消**，不會留下改到一半的資料。
+
+**題四**：`UPDATE students SET age = 19;` 有什麼問題？
+→ 沒有 `WHERE`，會把所有學生的年齡都改成 19。
+
+@section 本課重點整理
+- **為什麼需要資料庫**：記憶體會失憶、檔案會被並行寫壞（競態條件）、大檔案查找很慢。
+- **資料表**：列是一筆資料，欄是一種屬性；每欄綁定型別與規則。
+- **四種約束**：`PRIMARY KEY`（唯一身分）、`NOT NULL`（必填）、`UNIQUE`（不重複）、`CHECK`（自訂規則）。
+- **兩層檢查**：Pydantic 給友善錯誤訊息；資料庫約束是所有寫入管道共用的最後防線。
+- **CRUD 的 SQL**：`INSERT ... RETURNING`、`SELECT` 明列欄位、`UPDATE`/`DELETE` 千萬別漏 `WHERE`。
+- **連線**：連線字串放環境變數；`with` 區塊正常結束自動 COMMIT，例外時自動 ROLLBACK。
+- **SQL 注入**：永遠用參數化查詢 `execute(sql, (參數,))`，絕不拼接字串；單一元素 tuple 記得加逗號。
+
+@term 關聯式資料庫
+以資料表儲存資料，並用 SQL 查詢與強制規則的資料庫（Relational Database）。
+@term PostgreSQL
+業界廣泛使用的開源關聯式資料庫，常簡稱 Postgres。
+@term 競態條件
+多個程式同時讀寫同一份資料，結果取決於誰先誰後，造成資料錯亂（Race Condition）。
+@term SQL
+與關聯式資料庫溝通的標準語言（Structured Query Language）。
+@term 資料表
+由列（每筆資料）與欄（每種屬性）組成、欄位綁定型別的資料結構（Table）。
+@term 主鍵
+唯一且不可為空、用來識別每筆資料的欄位（Primary Key）。
+@term 約束
+資料庫層級強制的規則，如 NOT NULL、UNIQUE、CHECK（Constraint）。
+@term CHECK 約束
+在資料庫中自訂業務規則，例如年齡必須介於 0 到 120。
+@term RETURNING
+PostgreSQL 語法，新增或修改後直接傳回結果，例如自動產生的 id。
+@term 交易
+一組操作要嘛全部成功、要嘛全部取消的機制（Transaction）。
+@term COMMIT
+提交交易，讓修改正式生效。
+@term ROLLBACK
+回滾交易，取消交易中已做的所有修改。
+@term SQL 注入
+使用者輸入被拼進 SQL 當成指令執行的攻擊（SQL Injection）。
+@term 參數化查詢
+SQL 結構與參數值分開傳送，參數只被當作資料處理的查詢方式（Parameterized Query）。
+@term psycopg
+Python 連接 PostgreSQL 的官方推薦驅動程式。
