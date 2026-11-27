@@ -220,6 +220,31 @@ Type 'number' is not assignable to type 'string'.
 ```
 這行錯誤的程式碼，**在上線前就被擋下了**。把這個指令放進第 69 課的 CI 流程，每次提交程式碼都會自動檢查。
 
+@section 和 AI 一起做：型別是你和 AI 的共同語言
+TypeScript 的型別，在和 AI 合作時有一個額外的好處：**型別是一份 AI 也看得懂的精確規格**。你先定義好型別，再請 AI 實作，它就比較不會亂猜。
+
+**先寫型別，再請 AI 實作**
+```typescript
+type SubmissionState =
+  | { status: "idle" }
+  | { status: "uploading"; progress: number }
+  | { status: "success"; submissionId: string }
+  | { status: "error"; message: string };
+```
+```
+請根據上面的 SubmissionState 型別，實作 renderSubmission(state) 函式。
+每一種狀態都要處理，不要使用 any，也不要用型別斷言（as）。
+```
+禁止 `any` 和 `as` 很重要：這兩個是 AI 讓編譯錯誤「消失」最常用的方法，但它們只是把錯誤藏起來，並沒有真正解決。
+
+**怎麼檢查**
+- 執行型別檢查（`tsc --noEmit`），確認沒有錯誤；
+- 搜尋 AI 的程式碼裡有沒有 `any`、`as`、`// @ts-ignore`；
+- 故意在型別裡加一種新狀態，看編譯器會不會提醒你哪裡還沒處理。
+
+**請 AI 同步前後端的型別**
+可以請 AI 根據後端的 Pydantic 模型（第 55 課）產生對應的 TypeScript 型別，再比對兩邊是否一致。欄位名稱拼錯、可為空的欄位不一致，是前後端串接最常見的錯誤。
+
 @section 動動腦：判斷看看
 **題一**：寫了 `interface Student` 並用 `as Student[]` 轉換 `res.json()` 的結果，執行期會自動驗證資料嗎？
 → 不會。型別在轉譯時被擦除，`as` 只是對編譯器的承諾，不產生任何檢查。

@@ -221,6 +221,39 @@ class StudentCreate(BaseModel):
 **問：AI 的結構化輸出也能用嗎？**
 答：可以，而且很推薦。第 22 課要求模型輸出 JSON，第 26 課的工具呼叫參數，都可以丟進 Pydantic 模型驗證。模型偶爾會漏欄位、型別錯、多塞東西，用同一套入境審查擋下，再決定要重試還是回報錯誤。**模型的輸出也是「外來資料」。**
 
+@section 和 AI 一起做：讓 AI 的輸出符合結構
+Pydantic 不只能驗證使用者送來的資料，也是**驗證 AI 輸出**最好用的工具。LLM 的回應本質上是一段文字，你永遠不能假設它一定是正確的 JSON 格式。
+
+**用 Pydantic 當作 AI 輸出的守門員**
+```python
+from pydantic import BaseModel, Field, ValidationError
+
+class EssayFeedback(BaseModel):
+    score: int = Field(ge=0, le=100)
+    strengths: list[str] = Field(min_length=1, max_length=3)
+    suggestions: list[str] = Field(min_length=1, max_length=3)
+
+try:
+    feedback = EssayFeedback.model_validate_json(llm_output)
+except ValidationError:
+    # 不要直接把壞掉的輸出存進資料庫：重試一次，或交給老師人工處理
+    ...
+```
+這樣一來，就算 AI 給了 120 分、或回傳格式完全不對，錯誤的資料也不會流進你的系統。
+
+**適合請 AI 做的事**
+- 根據一份 JSON 範例，產生對應的 Pydantic 模型；
+- 把讀取模型和寫入模型分開（例如回應不應該包含密碼雜湊）；
+- 寫出各欄位的驗證規則。
+
+**怎麼檢查**
+- 看每個欄位的限制是否合理：分數有上下限嗎？字串有最大長度嗎？
+- 確認寫入模型**沒有**讓使用者自己設定的欄位，例如 `id`、`role`、`created_at`；
+- 實際丟幾筆錯誤資料進去，確認會被擋下。
+
+**不要交給 AI 的事**
+不要相信 AI 自己說「我保證輸出是正確的 JSON」。驗證必須由程式來做，而不是由提示詞來保證。
+
 @section 動動腦：判斷看看
 **題一**：所有路由都加上了嚴格的 Pydantic Schema，還需要權限檢查和資料庫約束嗎？
 → 需要。Schema 只檢查資料的形狀、型別和範圍，不知道呼叫者有沒有權限，也無法防止並行寫入時的重複衝突。
