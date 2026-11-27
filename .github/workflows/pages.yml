@@ -36,7 +36,7 @@ jobs:
       - name: Package static course
         run: |
           mkdir -p _site
-          cp genai.html genai.js index.html styles.css app.js course.js lessons.js progress.js python-worker.js _site/
+          cp route.html route.js route.css route-data.js genai.html genai.js index.html styles.css app.js course.js lessons.js progress.js python-worker.js _site/
       - name: Upload course for download
         uses: actions/upload-artifact@v4
         with:

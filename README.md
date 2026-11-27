@@ -81,3 +81,9 @@ Private repository 能否使用 Pages 取決於 GitHub 方案與設定。原始�
 來源：https://github.com/microsoft/generative-ai-for-beginners/blob/main/translations/zh-TW/README.md
 
 此頁提供學習安排及外部教材連結，不是 Microsoft 官方課程副本。模型範例須在本機或服務環境實作，頁面不處理 API 金鑰或代為執行模型。
+
+## 每次 30 分鐘的整合路線
+
+`route.html` 整合 588 個單元（規劃 294 小時，含複習與選修），包含原 36 週全部主題、微軟 21 課＋設定，以及吳恩達／李宏毅／D2L／Karpathy 精選互補單元。不是外部課程逐堂重製。每個單元提供範圍、任務、成果驗收、計時、筆記、獨立進度與匯出匯入；大作業分成規劃／實作／驗證，未完成可增加接續時段。
+
+原課程與補充頁的 localStorage 不變，新路線使用 python-ai-30min-v1；不假定舊完成標記能等價換算新單元。
