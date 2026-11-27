@@ -177,6 +177,46 @@ GitHub Actions 自動啟動 `validate`：
 **問：AI 提示詞的修改也要經過 CI 嗎？**
 答：要。提示詞改一個字，模型的行為就可能大幅改變（第 20、29 課）。把提示詞放進版本控制，修改時自動跑黃金評估集，分數低於門檻就擋下，和程式碼的測試是同樣的道理。**提示詞也是程式碼。**
 
+@section 實作：需要資料庫的測試怎麼在 CI 上跑
+很多測試需要真的資料庫（第 61 課的整合測試）。GitHub Actions 可以在工作執行時，順便啟動一個 PostgreSQL 容器（第 63 課），測試結束後自動丟掉：
+```yaml
+name: ci
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: school_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:test@localhost:5432/school_test
+      OPENAI_API_KEY: sk-fake-for-tests
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: ruff check .
+      - run: pytest -q
+```
+幾個值得注意的地方：
+- **`services` 區塊**啟動了一個乾淨的資料庫。每次執行都是全新的，測試之間不會互相汙染；
+- **`health-cmd`** 讓 CI 等資料庫真的準備好了才開始跑測試，避免「資料庫還沒開好，測試就連不上」這種時好時壞的失敗；
+- **這裡的密碼是假的，可以直接寫在檔案裡**，因為這個資料庫只存在幾分鐘、只有測試資料。真正的秘密（例如部署用的金鑰）才要放在 GitHub 的 Secrets 裡（第 64 課）；
+- **LLM 金鑰是假的**：CI 上的測試應該用假的 LLM 回應（第 61 課的替身），不要真的呼叫外部 API。否則測試會變慢、會花錢，也會因為外部服務不穩而時好時壞；
+- **`cache: pip`** 會快取下載過的套件，讓下一次執行快上不少。
+
 @section 動動腦：判斷看看
 **題一**：`deploy` 工作設了 `needs: validate`，如果 pytest 有一個測試失敗，會發生什麼事？
 → validate 失敗，deploy 不會執行，壞掉的程式碼不會上線。

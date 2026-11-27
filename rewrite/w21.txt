@@ -195,6 +195,38 @@ raise ValueError(f"金鑰格式錯誤：{api_key}")
 **問：測試時需要真的金鑰嗎？**
 答：大多數不需要。單元測試和整合測試用 stub 取代外部服務（第 61 課），根本不必帶金鑰。少數需要真實呼叫的測試，在 CI 中用專門的測試金鑰，存在 CI 平台的加密秘密中，並設定低額度上限（第 65 課）。
 
+@section 實作：一份完整的設定類別
+把這一課的原則合在一起，一個實際專案的設定檔大概長這樣。它使用 `pydantic-settings` 套件（第 51 課 Pydantic 的延伸）：
+```python
+from pydantic import SecretStr, Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    app_env: str = "development"          # development / staging / production
+    database_url: str                      # 沒有預設值：沒設定就啟動失敗
+    openai_api_key: SecretStr              # 秘密：印出時會顯示 **********
+    llm_model: str = "gpt-4o-mini"
+    llm_timeout_seconds: float = Field(30, gt=0, le=120)
+    max_upload_mb: int = 10
+
+settings = Settings()
+```
+逐項來看它做到了什麼：
+- **必填的設定沒有預設值**。`database_url` 沒設定時，程式在**啟動那一刻**就會報錯，而不是等到第一個使用者連進來才失敗。「早失敗、大聲失敗」比默默帶著錯誤設定運作好得多；
+- **秘密用 `SecretStr`**。就算不小心 `print(settings)` 或把它寫進日誌（第 62 課），金鑰也只會顯示成星號。真正要用時才呼叫 `.get_secret_value()`；
+- **有範圍限制**。逾時秒數必須大於 0、不超過 120，打錯成 3000 會在啟動時被擋下；
+- **型別自動轉換**。環境變數永遠是字串，`MAX_UPLOAD_MB=10` 會被自動轉成整數 10。
+
+搭配一份**提交到 Git** 的 `.env.example`，列出所有需要的設定，但只放假值：
+```
+APP_ENV=development
+DATABASE_URL=postgresql://user:password@localhost:5432/school
+OPENAI_API_KEY=sk-replace-me
+```
+新同事加入時，複製成 `.env` 再填入真正的值就能開始工作。而真正的 `.env` 則列在 `.gitignore` 裡，永遠不會被提交。
+
 @section 動動腦：判斷看看
 **題一**：金鑰被推上 GitHub，馬上又推一個刪除它的提交，安全了嗎？
 → 不安全。舊提交仍在歷史中可被查看；第一步必須立刻撤銷並更換金鑰。
