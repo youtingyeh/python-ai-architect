@@ -61,7 +61,20 @@ aside>select,aside>input[type=search]{width:100%;margin-top:4px}
 .unit-title{display:block}
 .unit-meta{display:block;font-size:12px;color:#586a76;margin-top:3px;font-weight:400}
 #unit,#lesson{background:white;padding:36px 42px;border:1px solid #ced7dc;border-radius:14px;min-width:0;box-shadow:0 2px 12px rgba(0,0,0,.03)}
-#unit p,#lesson p{white-space:pre-line;margin:12px 0 18px}
+#unit p,#lesson p,.lesson-prose{white-space:pre-line;margin:12px 0 18px}
+.inline-code{background:#edf2f7;color:#1a365d;padding:2px 6px;border-radius:5px;font:14.5px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;border:1px solid #d5e0ea}
+.math-inline{font-family:"Cambria Math","Times New Roman","STIX Two Math",Georgia,serif;font-size:1.06em;color:#0d2b45;background:#f4f8fc;padding:1px 6px;border-radius:5px;display:inline-flex;align-items:center;gap:2px;vertical-align:baseline;white-space:nowrap}
+.math-block{font-family:"Cambria Math","Times New Roman","STIX Two Math",Georgia,serif;font-size:1.14em;color:#0d2b45;background:#f4f8fc;border:1px solid #d5e3f0;border-left:4px solid #185c91;border-radius:8px;padding:14px 20px;margin:16px 0;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px;overflow-x:auto;white-space:normal}
+.mtext{font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;font-style:normal;font-size:.92em}
+.mfrac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 4px;line-height:1.25;font-size:.94em}
+.mnum{border-bottom:1.5px solid #0d2b45;padding:0 5px 2px;text-align:center}
+.mden{padding:2px 5px 0;text-align:center}
+.msqrt{display:inline-flex;align-items:center;vertical-align:middle}
+.mrad{border-top:1.5px solid #0d2b45;padding:0 3px;margin-left:1px}
+.mcases{display:inline-flex;align-items:center;vertical-align:middle;margin:0 4px}
+.mcases-brace{font-size:2.1em;font-weight:300;line-height:1;margin-right:6px}
+.mcases-body{display:inline-flex;flex-direction:column;align-items:flex-start;gap:4px;font-size:.92em}
+.mcase-row{display:block}
 .meta-row{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px}
 .track-badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:700}
 .track-badge.ai{background:#e1f0fa;color:#0f4c81}

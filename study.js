@@ -1,6 +1,84 @@
 (()=>{'use strict';
 const lessons=window.STUDY,KEY='python-ai-reading-v1',$=s=>document.querySelector(s),esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let state={last:lessons[0].id,lessons:{}},current,trackFilter='all';
+
+const SYMBOLS={
+  '\\alpha':'α','\\beta':'β','\\theta':'θ','\\tau':'τ','\\eta':'η',
+  '\\lambda':'λ','\\sigma':'σ','\\mu':'μ','\\delta':'δ','\\Delta':'Δ',
+  '\\epsilon':'ε','\\nabla':'∇','\\partial':'∂','\\infty':'∞','\\emptyset':'∅',
+  '\\cap':'∩','\\in':'∈','\\sim':'∼','\\approx':'≈','\\neq':'≠',
+  '\\ge':'≥','\\le':'≤','\\ll':'≪','\\pm':'±','\\times':'×',
+  '\\cdot':'·','\\cdots':'⋯','\\dots':'…','\\to':'→','\\rightarrow':'→',
+  '\\leftarrow':'←','\\mid':'∣','\\circ':'°','\\quad':' ',
+  '\\sum':'∑','\\prod':'∏','\\log':'log','\\exp':'exp','\\max':'max',
+  '\\min':'min','\\arg':'arg'
+};
+function replaceBraced(s,cmd,fn){
+  const tok=cmd+'{';let idx=s.indexOf(tok);
+  while(idx!==-1){
+    let d=1,i=idx+tok.length;
+    while(i<s.length&&d>0){if(s[i]==='{')d++;else if(s[i]==='}')d--;i++;}
+    if(d!==0)break;
+    const inner=s.slice(idx+tok.length,i-1);
+    s=s.slice(0,idx)+fn(inner)+s.slice(i);
+    idx=s.indexOf(tok);
+  }
+  return s;
+}
+function replaceFrac(s){
+  const tok='\\frac{';let idx=s.indexOf(tok);
+  while(idx!==-1){
+    let d=1,i=idx+tok.length;
+    while(i<s.length&&d>0){if(s[i]==='{')d++;else if(s[i]==='}')d--;i++;}
+    if(d!==0)break;
+    const num=s.slice(idx+tok.length,i-1);
+    while(i<s.length&&s[i]===' ')i++;
+    if(s[i]!=='{')break;
+    i++;const denStart=i;d=1;
+    while(i<s.length&&d>0){if(s[i]==='{')d++;else if(s[i]==='}')d--;i++;}
+    if(d!==0)break;
+    const den=s.slice(denStart,i-1);
+    s=s.slice(0,idx)+`<span class="mfrac"><span class="mnum">${renderMath(num)}</span><span class="mden">${renderMath(den)}</span></span>`+s.slice(i);
+    idx=s.indexOf(tok);
+  }
+  return s;
+}
+function renderMath(tex){
+  let s=tex.trim();
+  s=s.replace(/\\begin\{cases\}([\s\S]*?)\\end\{cases\}/g,(_,body)=>{
+    const rows=body.split(/\\\\/).map(r=>r.trim()).filter(Boolean).map(r=>{
+      const parts=r.split('&').map(p=>renderMath(p.trim()));
+      return `<span class="mcase-row">${parts.join('<span class="mcase-sep">，</span>')}</span>`;
+    }).join('');
+    return `<span class="mcases"><span class="mcases-brace">{</span><span class="mcases-body">${rows}</span></span>`;
+  });
+  s=s.replace(/\\(?:left|right|bigl|bigr)\b/g,'');
+  s=s.replace(/\\\|/g,'‖').replace(/\\%/g,'%').replace(/\\\{/g,'{').replace(/\\\}/g,'}');
+  s=replaceBraced(s,'\\text',inner=>`<span class="mtext">${inner}</span>`);
+  s=replaceBraced(s,'\\mathbf',inner=>`<b>${renderMath(inner)}</b>`);
+  s=replaceBraced(s,'\\mathbb',inner=>inner==='R'?'ℝ':`<b>${inner}</b>`);
+  s=replaceBraced(s,'\\mathcal',inner=>({O:'𝒪',N:'𝒩',I:'ℐ',L:'ℒ'}[inner]||`<i>${inner}</i>`));
+  s=replaceBraced(s,'\\hat',inner=>`${renderMath(inner)}&#770;`);
+  s=replaceBraced(s,'\\sqrt',inner=>`<span class="msqrt">&radic;<span class="mrad">${renderMath(inner)}</span></span>`);
+  s=replaceFrac(s);
+  s=s.replace(/\\hat\s*([a-zA-Z0-9])/g,'$1&#770;');
+  s=replaceBraced(s,'_',inner=>`<sub>${renderMath(inner)}</sub>`);
+  s=replaceBraced(s,'^',inner=>`<sup>${renderMath(inner)}</sup>`);
+  s=s.replace(/_([a-zA-Z0-9+\-])/g,'<sub>$1</sub>');
+  s=s.replace(/\^([a-zA-Z0-9+\-′']+)/g,'<sup>$1</sup>');
+  s=s.replace(/\\[a-zA-Z]+/g,cmd=>SYMBOLS[cmd]||cmd.slice(1));
+  return s;
+}
+function fmt(raw){
+  const escaped=esc(raw),codes=[];
+  let s=escaped.replace(/`([^`\n]+)`/g,(_,c)=>{const id=codes.length;codes.push(`<code class="inline-code">${c}</code>`);return `\u0000C${id}\u0000`;});
+  s=s.replace(/\$\$([\s\S]*?)\$\$/g,(_,t)=>`<div class="math-block" role="math">${renderMath(t)}</div>`);
+  s=s.replace(/\$([^$\n]+)\$/g,(_,t)=>`<span class="math-inline" role="math">${renderMath(t)}</span>`);
+  s=s.replace(/\*\*([^*\n]+)\*\*/g,'<strong>$1</strong>');
+  s=s.replace(/\u0000C(\d+)\u0000/g,(_,id)=>codes[Number(id)]);
+  return s;
+}
+
 function isEngineering(l){return /^w([1-9]|[12][0-9]|3[0-3])$/.test(l.id)||l.track==='eng'||l.stage.includes('後續')||l.stage.includes('Python')||l.stage.includes('網站')||l.stage.includes('系統架構');}
 function message(x){$('#status').textContent=x;}
 function clean(raw){
@@ -73,7 +151,7 @@ function show(id){
   const toc=`<nav class="lesson-toc" aria-label="本章小節導覽">
     <strong>本章 30 分鐘學習導覽（共 ${l.sections.length} 大節 · 全文約 ${chars.toLocaleString()} 字）</strong>
     <ol>
-      ${l.sections.map(([h])=>`<li>${esc(h)}</li>`).join('')}
+      ${l.sections.map(([h])=>`<li>${fmt(h)}</li>`).join('')}
       ${l.example?'<li>程式碼／量化案例與逐步拆解</li>':''}
       ${l.solution?'<li>進階完整參考實作與驗證範本</li>':''}
       <li>情境選擇題驗收（共 ${l.quiz.length} 題附詳解）</li>
@@ -88,14 +166,14 @@ function show(id){
       <h2>${esc(l.title)}</h2>
       ${toc}
     </div>
-    ${l.sections.map(([h,p])=>`<section class="lesson-section"><h3>${esc(h)}</h3><p>${esc(p)}</p></section>`).join('')}
-    ${l.example?`<section class="lesson-section example-box"><h3>範例與逐步解說</h3><p class="section-hint">請先閱讀下方範例並思考每一段的輸入、狀態變化與輸出，再逐條核對下方的拆解說明：</p><pre><code>${esc(l.example)}</code></pre><h4>逐步拆解與關鍵細節</h4><ol class="walkthrough-list">${l.walkthrough.map(t=>'<li>'+esc(t)+'</li>').join('')}</ol></section>`:''}
+    ${l.sections.map(([h,p])=>`<section class="lesson-section"><h3>${fmt(h)}</h3><div class="lesson-prose">${fmt(p)}</div></section>`).join('')}
+    ${l.example?`<section class="lesson-section example-box"><h3>範例與逐步解說</h3><p class="section-hint">請先閱讀下方範例並思考每一段的輸入、狀態變化與輸出，再逐條核對下方的拆解說明：</p><pre><code>${esc(l.example)}</code></pre><h4>逐步拆解與關鍵細節</h4><ol class="walkthrough-list">${l.walkthrough.map(t=>'<li>'+fmt(t)+'</li>').join('')}</ol></section>`:''}
     ${l.solution?`<details class="solution-box" open><summary>進一步看完整解法與進階實作範本（不用提交作業）</summary><pre><code>${esc(l.solution)}</code></pre></details>`:''}
     <section class="quiz-section">
       <h3>選擇題驗收（30 分鐘讀後理解檢查）</h3>
       <p>答題後立即顯示正確答案與深度解析。全部答對即記錄本課通過，可隨時修改選項後重新作答。</p>
       <form id="quiz" class="quiz">
-        ${l.quiz.map((q,j)=>`<fieldset><legend>${j+1}. ${esc(q.prompt)}</legend>${q.options.map((o,k)=>`<label><input type="radio" name="q${j}" value="${k}" ${r.answers[j]===k?'checked':''} required> ${esc(o)}</label>`).join('')}${r.graded?`<div class="feedback ${r.answers[j]===q.answer?'':'wrong'}"><b>${r.answers[j]===q.answer?'✓ 答對':'✕ 答錯'} · 正確答案：${esc(q.options[q.answer])}</b><p>${esc(q.explanation)}</p></div>`:''}</fieldset>`).join('')}
+        ${l.quiz.map((q,j)=>`<fieldset><legend>${j+1}. ${fmt(q.prompt)}</legend>${q.options.map((o,k)=>`<label><input type="radio" name="q${j}" value="${k}" ${r.answers[j]===k?'checked':''} required> <span>${fmt(o)}</span></label>`).join('')}${r.graded?`<div class="feedback ${r.answers[j]===q.answer?'':'wrong'}"><b>${r.answers[j]===q.answer?'✓ 答對':'✕ 答錯'} · 正確答案：${fmt(q.options[q.answer])}</b><p>${fmt(q.explanation)}</p></div>`:''}</fieldset>`).join('')}
         <button class="primary" type="submit">檢查答案</button>
         <p class="question-status" id="result" role="status">${r.graded?l.quiz.filter((q,j)=>r.answers[j]===q.answer).length+' / '+l.quiz.length+' 題正確'+(passed(l)?' · 本課已通過':' · 可重新作答'):''}</p>
       </form>

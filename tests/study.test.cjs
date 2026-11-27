@@ -28,6 +28,9 @@ test('all 76 reading lessons render with AI-first order, 30-minute reading depth
       assert.ok(q.explanation&&q.explanation.length>=40);
       count++;
     }
+    // Verify no raw $...$ or unrendered LaTeX commands appear outside <pre><code> blocks
+    const proseHtml=Array.from(d.querySelectorAll('.lesson-prose, .walkthrough-list, .quiz')).map(el=>el.innerHTML.replace(/<code[\s\S]*?<\/code>/g,'')).join(' ');
+    assert.equal(/\\[a-zA-Z]+|\$[^$\n]+\$|\$/.test(proseHtml),false,`Lesson ${l.id} has unrendered math or raw $`);
   }
   assert.ok(count>=228);
 });
