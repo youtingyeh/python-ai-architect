@@ -72,3 +72,12 @@ Private repository 能否使用 Pages 取決於 GitHub 方案與設定。原始�
 ## 作業建議位置
 
 建立 `learning/week01/` 至 `learning/week36/`；另以 `architecture/` 保存需求、圖與 ADR，以 `projects/mini-lms/` 保存獨立練習平台。不要在正式 RISE 網站練習故障或刪除流程。
+
+
+## 生成式 AI 補充教材（2026-11-27）
+
+開啟 `genai.html`，涵蓋 Microsoft Generative AI for Beginners 的 21 課與課前設定，附繁體中文／英文來源、原課週次對照、原創實作任務及自評條件。重複主題標示為整合複習；補充進度與筆記獨立儲存，可匯出匯入。
+
+來源：https://github.com/microsoft/generative-ai-for-beginners/blob/main/translations/zh-TW/README.md
+
+此頁提供學習安排及外部教材連結，不是 Microsoft 官方課程副本。模型範例須在本機或服務環境實作，頁面不處理 API 金鑰或代為執行模型。
