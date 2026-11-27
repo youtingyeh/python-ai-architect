@@ -1,9 +1,9 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),{parseHTML}=require('linkedom');
 function boot(){const {window}=parseHTML(fs.readFileSync('study.html','utf8')),saved={};for(const id of ['stage','search'])Object.defineProperty(window.document.querySelector('#'+id),'value',{value:'',writable:true});const ctx={window,document:window.document,location:{hash:''},localStorage:{getItem:()=>null,setItem:(k,v)=>saved[k]=v},Blob,URL,setTimeout,confirm:()=>true};vm.createContext(ctx);for(const n of ['study-data.js','glossary.js','study.js'])vm.runInContext(fs.readFileSync(n,'utf8'),ctx);return {window,ctx,saved,d:window.document};}
-test('all 86 reading lessons render with AI-first order, 30-minute reading depth, examples, and valid questions',()=>{
+test('all 103 reading lessons render with AI-first order, 30-minute reading depth, examples, and valid questions',()=>{
   const {window,ctx,d}=boot();
-  assert.equal(window.STUDY.length,86);
-  // First 47 lessons must be the AI track, lessons 48..80 must be w1..w33, and 81..86 the AI security & quantum extension w37..w42
+  assert.equal(window.STUDY.length,103);
+  // First 47 lessons must be the AI track, lessons 48..80 must be w1..w33, 81..86 the AI security & quantum extension w37..w42, and 87..103 the quantum computing track q1..q17
   for(let i=0;i<47;i++){
     assert.ok(!/^w([1-9]|[12][0-9]|3[0-3])$/.test(window.STUDY[i].id),`Lesson ${i+1} (${window.STUDY[i].id}) should be AI track`);
   }
@@ -12,6 +12,10 @@ test('all 86 reading lessons render with AI-first order, 30-minute reading depth
   }
   for(let i=80;i<86;i++){
     assert.equal(window.STUDY[i].id,'w'+(i-43),`Lesson ${i+1} should be AI security & quantum extension`);
+    assert.equal(window.STUDY[i].track,'eng');
+  }
+  for(let i=86;i<103;i++){
+    assert.equal(window.STUDY[i].id,'q'+(i-85),`Lesson ${i+1} should be quantum computing track`);
     assert.equal(window.STUDY[i].track,'eng');
   }
   let count=0;
@@ -72,7 +76,7 @@ test('quiz hub lists every lesson; term tooltips, code blocks, quotes, and math 
   const {window,ctx,d}=boot();
   ctx.location.hash='#quiz';
   window.dispatchEvent(new window.Event('hashchange'));
-  assert.equal(d.querySelectorAll('.quiz-hub a').length,86);
+  assert.equal(d.querySelectorAll('.quiz-hub a').length,103);
   ctx.location.hash='#ext-tensor';
   window.dispatchEvent(new window.Event('hashchange'));
   assert.ok(d.querySelectorAll('.lesson-prose .term').length>0);
