@@ -5,7 +5,7 @@
 ## 進行中的工作（最新狀態寫在這裡）
 - 2026-11-27 23:45：使用者要求把課程擴充到至少 100 課，新增「量子計算專題」（第 87 課起，id 用 `q1`、`q2`…），內容參考 IBM「Quantum Machine Learning with Qiskit」、openHPI「Quantum Machine Learning」、GitHub「Learn-Quantum-Machine-Learning」，以及 2024～2026 的權威論文與綜述。可與 AI 無關。
 - 課程規劃（stage「量子計算專題」，track 用 `eng`，課號 87 起）：q1 數學語言｜q2 單一量子位元與布洛赫球｜q3 多量子位元與糾纏｜q4 測量、隱形傳態、混合態｜q5 Deutsch–Jozsa／Bernstein–Vazirani｜q6 Grover｜q7 QFT 與相位估計｜q8 Shor 與資源估計（Gidney 2025：<100 萬雜訊量子位元、約一週）｜q9 雜訊與 NISQ、錯誤緩解｜q10 錯誤更正（Willow 2024 低於門檻、d=7 每輪 0.143%）｜q11 硬體平台（含 Harvard/MIT 3000 原子連續運作，Nature 2025）｜q12 VQE／QAOA｜q13 QML I（編碼、變分分類器、data re-uploading、參數平移）｜q14 QML II（核方法、QGAN、貧瘠高原、去量子化）｜q15 量子優勢現況（Quantum Echoes 2025 可驗證優勢）｜q16 量子密碼學（BB84 QKD、量子隨機數、QKD vs PQC；使用者 23:46 追加要求）
-- 進度：q1、q2 課文已寫（rewrite/q1.txt、q2.txt），尚未在 study-data.orig.js 註冊。註冊方式見下方第 2 節；測試的課數需同步調整。
+- 進度：q1–q5 課文已寫（rewrite/q1.txt…q5.txt），尚未在 study-data.orig.js 註冊。註冊方式見下方第 2 節；測試的課數需同步調整。
 
 - **最後更新時間**：2026-11-28 00:00 左右 (UTC+8)
 - **GitHub 儲存庫**：`https://github.com/youtingyeh/python-ai-architect`（`main` 最新 Commit：`4dd1d502dfed3c979a6647f43cea51e2f4fd0481`）
