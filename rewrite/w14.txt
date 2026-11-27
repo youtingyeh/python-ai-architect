@@ -1,0 +1,266 @@
+@section 開場：把前端和後端接起來
+到這裡，我們手上有兩半：
+- **後端**：FastAPI + PostgreSQL，跑在 `http://127.0.0.1:8000`（第 50～54 課）；
+- **前端**：語意清楚、響應式的 HTML + CSS 頁面（第 55、56 課）。
+
+最後一塊拼圖：讓瀏覽器用 **JavaScript** 的 `fetch`，在**不重新整理整頁**的情況下，和後端交換 JSON 資料。完成後，你就有了一個真正的「**全端**」（Full-Stack）應用。
+
+這一課對 AI 應用特別重要。前端送出一個提示詞給後端的 LLM，往往要等 **2 到 15 秒**。如果你沒處理好「等待」這件事：
+- 畫面毫無反應，使用者以為壞了；
+- 使用者在等待時**連點十下**送出按鈕，後端就收到 10 個重複的請求，可能重複扣款，或燒掉 10 倍的 LLM 費用；
+- 出錯時畫面什麼都不說，或者更糟，顯示「成功」。
+
+這一課要學：
+1. JavaScript 為什麼需要「非同步」；
+2. `fetch` 的兩個大陷阱；
+3. 四種畫面狀態：載入中、成功、空的、錯誤；
+4. 用 `finally` 防止按鈕卡死；
+5. 用 `textContent` 防止 **XSS** 攻擊；
+6. **CORS** 是什麼，以及它**不是**什麼。
+
+@section 為什麼要非同步：一個人的餐廳
+瀏覽器裡的 JavaScript 是「**單執行緒**」的：同一時間只能做一件事。畫面捲動、按鈕動畫、處理點擊，全都由**同一個工人**負責。
+
+如果發出網路請求後，這個工人**站在原地等**後端回應（同步等待），那等待的 3 秒裡，網頁會**完全凍結**：不能捲動、不能點、動畫卡住。
+
+**比喻：**一間只有一位服務生的餐廳。如果他幫客人點完餐後，就站在廚房門口等菜做好才離開，其他客人叫他都不理，餐廳就癱瘓了。聰明的做法是：把單子交給廚房，**拿一張號碼牌**，先去服務別的客人；菜好了廚房叫號，他再回來端菜。
+
+這就是「**非同步**」（Asynchronous）。在 JavaScript 中：
+- 那張**號碼牌**叫做 **Promise**（承諾）：代表「一個未來才會有的結果」；
+- 負責「菜好了就叫號」的機制叫做**事件迴圈**（Event Loop）。
+
+用 `async` / `await` 語法，可以把非同步程式寫得像一般由上往下的程式：
+```
+async function loadStudents() {
+  const res = await fetch("http://127.0.0.1:8000/students");
+  const students = await res.json();
+  console.log(students);
+}
+```
+`await` 的意思是：「在**這個函式裡**等結果回來再往下走，但**等待期間，工人可以去做別的事**。」畫面不會凍結。
+
+這和第 50 課提到的 Python ASGI 是同一個概念：等待網路時不占著工人。
+
+@section fetch 的兩個大陷阱
+**陷阱一：需要兩次 await。**
+```
+const res = await fetch(url);      // 第一次
+const data = await res.json();     // 第二次
+```
+- 第一次 `await fetch(url)` 完成時，只代表「**收到回應的開頭**」：狀態碼和標頭（第 49 課）。回應的內容（body）可能還在網路上傳送中；
+- 第二次 `await res.json()`：等**內容全部收完**，並解析成 JavaScript 物件。
+
+忘了第二個 `await`，`data` 拿到的會是一張「號碼牌」（Promise），而不是真正的資料，後面使用時就會出現莫名其妙的錯誤。
+
+**比喻：**收包裹。第一次 await 是「快遞員按門鈴，你看到包裹外箱上的標籤」；第二次 await 是「把箱子拆開，拿出裡面的東西」。
+
+**陷阱二：404、422、500 不會跳進 catch！**
+這是**全世界最多前端新手踩到的坑**。
+
+很多人以為：
+```
+try {
+  const res = await fetch(url);
+  // 成功
+} catch (err) {
+  // 失敗
+}
+```
+後端回傳 404 或 500 時會進到 `catch`。**錯！**
+
+`fetch` 只有在「**根本拿不到 HTTP 回應**」時才會拋出例外：網路斷線、找不到網域、被 CORS 擋下。只要伺服器有回應**任何**狀態碼，哪怕是 `500 Internal Server Error`，對 `fetch` 來說都是「傳輸成功」。
+
+**比喻：**你寄信給公司詢問，對方回信說「查無此人」。對郵局來說，這封信**成功送達了**，郵局不會告訴你出了問題。是否「查無此人」，要你**自己拆信來看**。
+
+**所以必須自己檢查 `res.ok`：**
+```
+const res = await fetch(url);
+if (!res.ok) {
+  throw new Error("讀取失敗：HTTP " + res.status);
+}
+const data = await res.json();
+```
+`res.ok` 在狀態碼是 200～299 時為 `true`。不是的話，**主動拋出錯誤**，讓程式走進 `catch`。
+
+@section 四種畫面狀態
+每個需要等待資料的畫面，都應該明確處理四種狀態：
+1. **載入中（loading）**：顯示「載入學生資料中……」，讓使用者知道系統在工作；
+2. **成功（success）**：顯示資料；
+3. **空的（empty）**：成功了，但沒有資料。顯示「目前還沒有學生，新增第一位吧！」，而不是一張空白的表格讓人以為壞了；
+4. **錯誤（error）**：用**人話**說明發生什麼事、可以怎麼辦。
+
+**比喻：**餐廳的出餐看板：「準備中」、「請取餐」、「本日售完」、「系統故障請洽櫃台」。沒有看板，客人只能乾等猜測。
+
+在 AI 介面中，「載入中」尤其重要。第 27 課的 AI UX 提過：等待 LLM 的時候，要讓使用者知道系統正在處理，最好能用串流方式一個字一個字顯示。
+
+@section 送出表單：try / catch / finally
+把以上觀念組合起來，寫一個新增學生的處理函式：
+```
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();          // 1. 阻止瀏覽器整頁跳轉
+  submitBtn.disabled = true;       // 2. 停用按鈕，防止連點
+  statusEl.textContent = "處理中……";
+
+  try {
+    const res = await fetch(API + "/students", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: nameInput.value,
+                             age: Number(ageInput.value) }),
+    });
+    if (!res.ok) {
+      throw new Error("新增失敗：HTTP " + res.status);
+    }
+    form.reset();
+    statusEl.textContent = "✓ 新增成功";
+    await loadStudents();          // 重新載入清單
+  } catch (err) {
+    statusEl.textContent = "✕ " + err.message;
+  } finally {
+    submitBtn.disabled = false;    // 3. 不論成敗都恢復按鈕
+  }
+});
+```
+逐點說明：
+
+**`event.preventDefault()`：第一行就要寫。**
+表單的預設行為是「送出後**整頁跳轉**」（傳統網頁的做法）。不阻止的話，按下送出，頁面就重新整理了，你的 `fetch` 根本來不及跑完。
+
+**停用按鈕：防止連點。**
+請求進行中，按鈕不能再按。這擋住了「等太久、焦躁連點」造成的重複請求。
+
+不過要記得：這只是**前端的貼心保護**。使用者還是可以用其他方式重複送出（例如網路重試），真正的防重複要靠後端，例如第 53 課的唯一約束，或第 63 課會提到的冪等設計。
+
+**`Content-Type` 和 `JSON.stringify`：兩者缺一不可。**
+- 少了 `Content-Type: application/json` 標頭，後端不知道你送的是 JSON；
+- 少了 `JSON.stringify()`，直接把物件丟進 body，會被轉成毫無意義的字串 `"[object Object]"`。
+
+兩種情況，後端都會回 422。
+
+**`Number(ageInput.value)`：**輸入框的值**永遠是文字**，即使是 `type="number"`。第 51 課的後端開了嚴格模式，`"19"` 會被拒絕，所以前端要先轉成數字。
+
+**`finally`：最容易被忽略、後果最煩人的一點。**
+`finally` 裡的程式**不論成功或失敗都會執行**。如果把 `submitBtn.disabled = false` 寫在 `try` 的最後一行，那只要發生一次錯誤跳進 `catch`，按鈕就**永遠卡在停用狀態**：使用者改對了資料，卻再也按不了送出，只能重新整理頁面。
+
+**`catch` 裡要真的處理錯誤。**只寫 `console.log(err)` 等於把錯誤藏在使用者看不到的地方（第 45 課的 `except: pass` 在前端的翻版）。
+
+@section XSS：為什麼要用 textContent
+渲染學生清單時，有兩種寫法：
+
+**危險的寫法：**
+```
+tbody.innerHTML += "<tr><td>" + s.name + "</td></tr>";
+```
+
+**安全的寫法：**
+```
+const tr = document.createElement("tr");
+const td = document.createElement("td");
+td.textContent = s.name;
+tr.appendChild(td);
+tbody.appendChild(tr);
+```
+
+**為什麼第一種危險？**假設有個惡意使用者，註冊時把名字填成：
+```
+<img src=x onerror="alert(document.cookie)">
+```
+用 `innerHTML` 時，瀏覽器會把這串名字**當成真正的 HTML** 解析：建立一張圖片，圖片載入失敗時，執行 `onerror` 裡的 JavaScript。攻擊者就能在**每個看到學生清單的人**的瀏覽器裡執行任意程式，例如偷走登入憑證。這叫做**跨站腳本攻擊**（XSS，Cross-Site Scripting）。
+
+用 `textContent` 時，瀏覽器把它當成**純文字**，畫面上就只是顯示那串奇怪的字元，什麼都不會執行。
+
+**眼熟嗎？**這和第 52 課的 SQL 注入、第 28 課的提示注入是**同一種問題**：外部資料被當成「程式碼」執行。解法也一樣：**把資料和指令分開**。`textContent` 對 HTML 的作用，就像參數化查詢對 SQL。
+
+**原則：顯示外部資料時，永遠優先用 `textContent`。**特別是 AI 應用：LLM 的輸出也是「外部資料」，可能被提示注入操縱，絕不能直接用 `innerHTML` 渲染。
+
+@section CORS：瀏覽器的保護機制
+前端頁面開在 `http://127.0.0.1:5500`，去呼叫 `http://127.0.0.1:8000` 的 API，瀏覽器的主控台可能出現一個紅字錯誤：**CORS policy blocked**。
+
+**為什麼？**瀏覽器有一條「**同源政策**」：一個網頁預設只能讀取**同一個來源**的回應。「來源」由三樣東西決定：**協定 + 主機 + 埠號**。5500 和 8000 埠號不同，就算同一台電腦，也是不同來源。
+
+**為什麼要有這條規則？**想像你登入了網路銀行，然後在另一個分頁打開一個惡意網站。如果沒有同源政策，那個惡意網站的 JavaScript 就能用**你的登入狀態**去呼叫銀行的 API，讀取你的帳戶資料。
+
+**CORS**（Cross-Origin Resource Sharing，跨來源資源共用）是讓後端「**明確開放**」某些來源的機制。在 FastAPI 中：
+```
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://127.0.0.1:5500"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
+後端回應時會帶上「我允許 5500 這個來源讀取」的標頭，瀏覽器看到了才放行。
+
+**兩個重要的觀念：**
+- **CORS 是瀏覽器保護使用者的機制，不是後端的權限系統。**curl、Python 程式完全不受 CORS 限制，照樣能呼叫你的 API。API 的安全要靠驗證身分和權限檢查（第 59、60 課）；
+- **絕對不要把秘密金鑰寫在前端 JavaScript 裡。**前端程式碼會完整下載到每個使用者的瀏覽器，任何人按 F12 都看得到。這就是第 16 課要用後端代理呼叫 LLM API 的原因。
+
+@section 走一遍：全端學生管理
+**第一步：**後端加上 `CORSMiddleware`，允許 `http://127.0.0.1:5500`。
+
+**第二步：頁面載入時呼叫 `loadStudents()`。**
+狀態設為「載入中」→ `fetch` → 檢查 `res.ok` → 解析 JSON → 如果是空陣列顯示「目前尚無學生」，否則用 `createElement` 加 `textContent` 逐列渲染。
+
+**第三步：送出表單。**
+`preventDefault` → 停用按鈕 → POST JSON → 收到 201 後重新載入清單 → `finally` 恢復按鈕。整個過程頁面**不閃爍、不跳轉**。
+
+**第四步：故障演練。**
+故意把後端關掉（終端機按 Ctrl+C），再按一次新增。`fetch` 拋出網路錯誤，進入 `catch`，畫面顯示「無法連線至伺服器，請確認後端是否已啟動」；`finally` 照樣把按鈕恢復。
+
+**系統壞掉時，使用者仍然知道發生了什麼事，而且可以重試**，這就是有韌性的前端。
+
+@section 動動腦：判斷看看
+**題一**：後端回傳 500，`fetch` 的 Promise 會跳進 `catch` 嗎？
+→ 不會。只有網路層失敗才會拋出例外；必須自己檢查 `res.ok` 並主動 throw。
+
+**題二**：恢復按鈕的程式寫在 `try` 最後一行，會有什麼問題？
+→ 一旦出錯跳進 `catch`，按鈕就永遠停用。應寫在 `finally`。
+
+**題三**：渲染使用者名字時，`innerHTML` 和 `textContent` 該選哪個？為什麼？
+→ `textContent`。它把內容當純文字，不會執行名字裡夾帶的 HTML 或 JavaScript，防止 XSS。
+
+**題四**：後端設好了 CORS 只允許自己的網站，是否就能防止別人呼叫 API？
+→ 不能。CORS 只約束瀏覽器，curl 或程式可直接呼叫；API 安全需要身分驗證與權限檢查。
+
+@section 本課重點整理
+- **非同步**：JavaScript 單執行緒，等待網路時不能凍結畫面；Promise 是「號碼牌」，`async`/`await` 讓程式好讀。
+- **fetch 兩次 await**：先收到標頭，再讀完內容。
+- **fetch 不會因 404/500 而 reject**：一定要檢查 `res.ok`，主動拋出錯誤。
+- **四種狀態**：載入中、成功、空的、錯誤，每一種都要有畫面。
+- **送出表單**：`preventDefault` 第一行；請求期間停用按鈕；`Content-Type` 加 `JSON.stringify`；`finally` 恢復按鈕。
+- **XSS**：顯示外部資料（包括 LLM 輸出）用 `textContent`，不用 `innerHTML` 拼字串。
+- **CORS**：瀏覽器的同源保護；來源 = 協定 + 主機 + 埠號；它不是 API 權限系統。
+- **秘密金鑰**絕不放前端。
+
+@term JavaScript
+瀏覽器中負責網頁互動與行為的程式語言。
+@term 非同步
+發出請求後不原地等待，先處理其他事、結果回來再繼續的執行方式（Asynchronous）。
+@term Promise
+代表未來才會完成之結果的 JavaScript 物件，像一張號碼牌。
+@term async/await
+讓非同步程式寫起來像一般由上往下執行的語法。
+@term 事件迴圈
+JavaScript 在單執行緒下輪流處理各種事件與回呼的機制（Event Loop）。
+@term fetch
+瀏覽器內建、用來發送 HTTP 請求的函式。
+@term res.ok
+fetch 回應的屬性，狀態碼在 200 到 299 時為 true。
+@term preventDefault
+阻止瀏覽器預設行為（如表單送出整頁跳轉）的方法。
+@term finally
+try/catch 中不論成功或失敗都一定會執行的區塊。
+@term XSS
+外部資料被當成 HTML 或 JavaScript 在他人瀏覽器執行的攻擊（Cross-Site Scripting）。
+@term textContent
+把內容當成純文字設定的 DOM 屬性，可防止 XSS。
+@term innerHTML
+把字串當成 HTML 解析並插入的 DOM 屬性，用於外部資料時有 XSS 風險。
+@term 同源政策
+瀏覽器限制網頁只能讀取同一來源回應的安全規則（Same-Origin Policy）。
+@term CORS
+後端明確允許其他來源的網頁讀取回應的機制（Cross-Origin Resource Sharing）。
+@term 來源
+由協定、主機與埠號三者組成的網站身分（Origin）。

@@ -1,0 +1,269 @@
+@section 開場：上線後才爆炸的錯誤
+上一課，我們用 JavaScript 完成了全端的學生管理頁面。專案變大之後，幾乎每個團隊都經歷過這種噩夢：
+
+後端工程師把 API 回傳的欄位從 `name` 改名成 `full_name`。或者，某位新生還沒有成績，後端回傳 `average: null`。
+
+前端的 JavaScript 在開發時**沒有任何警告**。直到上線後，使用者點開頁面，瀏覽器才突然爆出：
+```
+Uncaught TypeError: Cannot read properties of null (reading 'toFixed')
+```
+整頁白屏。
+
+問題在於：JavaScript 是「**動態型別**」語言，一個變數裝的是數字、文字還是 `null`，要等到**程式真正執行到那一行**才知道。錯誤要等使用者踩到才會出現。
+
+**TypeScript** 的目的，就是把這類錯誤**提前**：從「使用者點到那一行才爆炸」（執行期，Runtime），提前到「你還在編輯器打字的那一秒」（編譯期，Compile-time）。
+
+**比喻：**JavaScript 像不檢查設計圖就直接蓋房子，等住戶搬進去才發現樓梯通到牆壁；TypeScript 像在動工前，有一位建築師逐張審查設計圖，指出「這個樓梯沒有出口」。
+
+這一課要學：
+1. TypeScript 是什麼，以及它最重要的真相：**型別擦除**；
+2. 為什麼要用 `unknown` 而不是 `any`；
+3. **型別守衛**：在執行期真正檢查外部資料；
+4. **辨識聯合型別**：讓編譯器幫你管理畫面狀態；
+5. 前端型別如何對齊後端 Schema。
+
+@section TypeScript 是什麼
+TypeScript 是「**加上型別的 JavaScript**」。你可以替變數、函式參數、回傳值**標註型別**：
+```
+interface Student {
+  id: number;
+  name: string;
+  age: number;
+  average: number | null;
+}
+
+function formatAverage(s: Student): string {
+  return s.average.toFixed(1);   // ✕ 編譯器報錯！
+}
+```
+- `interface Student`：描述「學生資料」應有的形狀，類似第 51 課的 Pydantic 模型；
+- `average: number | null`：平均成績**可能是數字，也可能是 null**（`|` 讀作「或」）；
+- `s.average.toFixed(1)`：編譯器立刻畫紅線：「`s.average` 可能是 null，不能直接呼叫 `toFixed`！」
+
+你被迫先處理 null 的情況：
+```
+function formatAverage(s: Student): string {
+  if (s.average === null) return "尚無成績";
+  return s.average.toFixed(1);   // ✓ 這裡編譯器知道一定是數字
+}
+```
+開場那個白屏的錯誤，在**寫程式的當下**就被抓到了。
+
+這和第 46 課 Python 的型別提示是同樣的精神，但 TypeScript 的檢查更嚴格、更完整。
+
+**必開設定：`strict: true`。**
+在專案設定檔 `tsconfig.json` 中開啟 `strict: true`。其中最重要的是 `strictNullChecks`：它讓 `number` 和 `number | null` 被視為**不同的型別**。不開的話，編譯器會假設任何東西都不會是 null，上面的保護就失效了。
+
+@section 最重要的真相：型別擦除
+這是學 TypeScript **最重要、也最常被誤解**的一件事。
+
+**瀏覽器根本不認識 TypeScript。**你寫的 `.ts` 檔案，要先經過編譯器（`tsc` 或 Vite 等工具）**轉譯成** `.js`，瀏覽器才能執行。而在轉譯過程中，**所有型別資訊都會被完全擦除**：`interface`、`: string`、`as Student`……一個字都不會留下。
+
+```
+// TypeScript
+function greet(name: string): string {
+  return "Hi " + name;
+}
+
+// 轉譯後的 JavaScript
+function greet(name) {
+  return "Hi " + name;
+}
+```
+這叫做「**型別擦除**」（Type Erasure）。
+
+**這代表什麼？**
+TypeScript 只在「**開發和編譯階段**」保護你：拼錯欄位名、忘了處理 null，都會被抓到。
+
+但當程式**實際執行**、用 `await res.json()` 從網路下載一包 JSON 時，那包資料是執行期才飛過來的。TypeScript 的 `interface` 早就被擦除了，**它不會、也不能自動檢查這包 JSON 是否真的符合 `Student` 的形狀**。
+
+**比喻：**TypeScript 像建築師審查**設計圖**。設計圖審查得再嚴格，也管不到**施工現場實際送來的建材**。如果供應商送來的鋼筋規格不對，需要現場的**驗收人員**檢查。對前端來說，「供應商」就是後端 API，「現場驗收」就是下面要講的型別守衛。
+
+這呼應第 51 課的鐵律：**網路邊界外進來的資料都不可信**。對前端來說，後端回傳的資料也是「外部資料」。
+
+@section any、as、unknown：三種態度
+面對外部資料（例如 `res.json()` 的結果），有三種寫法：
+
+**一、`any`：關掉檢查。**
+```
+const data: any = await res.json();
+data.naem.toUpperCase();   // 拼錯了，編譯器也不管
+```
+`any` 等於告訴編譯器「**這個東西別檢查了**」。更糟的是它會**傳染**：從 `any` 取出的東西也都是 `any`，整條呼叫鏈的型別檢查都癱瘓了。團隊裡到處是 `any` 的專案，被戲稱為「**AnyScript**」。
+
+**二、`as`：對編譯器撒謊。**
+```
+const data = (await res.json()) as Student[];
+```
+`as` 叫做「**型別斷言**」，意思是「別管了，**我保證**它是 Student 陣列」。編譯器就信了。但如上所述，型別會被擦除，`as` **不會產生任何執行期的檢查**。如果後端真的回傳了錯誤的資料，程式照樣在某個地方爆炸，而且錯誤訊息離真正的原因很遠，很難除錯。
+
+同類的還有「**非空斷言**」`!`：`s.average!.toFixed(1)` 意思是「我保證它不是 null」。一樣只是承諾，沒有檢查。
+
+**三、`unknown`：誠實地說「我不知道」。**
+```
+const raw: unknown = await res.json();
+raw.name;   // ✕ 編譯器報錯：你還沒確認它是什麼
+```
+`unknown` 的意思是「**這東西是什麼還不確定**」。編譯器會**禁止**你直接使用它，直到你**檢查過**為止。
+
+**比喻：**
+- `any`：海關直接放行所有行李，連看都不看；
+- `as`：旅客說「我保證裡面沒違禁品」，海關就信了；
+- `unknown`：行李先放在檢查台上，**打開檢查過**才能放行。
+
+**原則：外部資料一律用 `unknown`，檢查過後才當成特定型別使用。**
+
+@section 型別守衛：在執行期真正檢查
+「檢查」要怎麼做？寫一個「**型別守衛**」（Type Guard）函式：
+```
+function isStudent(value: unknown): value is Student {
+  if (typeof value !== "object" || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    typeof v.id === "number" && Number.isInteger(v.id) &&
+    typeof v.name === "string" && v.name.length > 0 &&
+    typeof v.age === "number" && Number.isInteger(v.age) &&
+    (v.average === null || typeof v.average === "number")
+  );
+}
+```
+逐項說明：
+- `value is Student`：這個特殊的回傳型別告訴編譯器：「如果這個函式回傳 `true`，那 `value` 就**確定**是 Student。」
+- 函式本體是**真正會執行**的 JavaScript 程式碼，在執行期逐欄檢查型別。
+
+使用時：
+```
+const raw: unknown = await res.json();
+if (!Array.isArray(raw) || !raw.every(isStudent)) {
+  throw new Error("API 回傳的資料格式不符合約定");
+}
+// 從這裡開始，編譯器知道 raw 是 Student[]
+renderStudents(raw);
+```
+後端回傳的資料只要少一個欄位、型別不對（例如 `{"id": "1", "name": 123}`），守衛就會**在網路邊界立刻攔下**，丟出清楚的錯誤，而不是讓錯誤資料流進畫面，在某個奇怪的地方崩潰。
+
+**一個 JavaScript 的歷史怪癖：`typeof null === "object"`。**
+沒錯，在 JavaScript 中 `typeof null` 的結果是 `"object"`，這是 1995 年留下的錯誤，為了相容性一直沒修。`typeof []`（陣列）也是 `"object"`。所以檢查「是不是物件」時，**一定要同時排除 null**：`typeof value === "object" && value !== null`。
+
+實務上，手寫守衛很繁瑣，常會用 **Zod** 這類驗證套件，寫法像前端版的 Pydantic。觀念完全相同。
+
+@section 辨識聯合型別：讓編譯器管理畫面狀態
+第 57 課提到，畫面有載入中、成功、錯誤等狀態。用 JavaScript 時，常見的寫法是幾個分開的變數：
+```
+let isLoading = true;
+let error = null;
+let data = null;
+```
+問題是：這三個變數可能出現**不合理的組合**。例如 `isLoading = true` 同時 `error` 有值，畫面該顯示什麼？或者忘了在出錯時把 `isLoading` 設回 false，畫面永遠在轉圈圈。
+
+TypeScript 可以用「**辨識聯合型別**」（Discriminated Union）描述「**只可能是這幾種之一**」：
+```
+type LoadState =
+  | { status: "loading" }
+  | { status: "error"; message: string }
+  | { status: "success"; data: Student[] };
+```
+每一種狀態都有一個共同的欄位 `status`（這就是「辨識」用的標籤），而且**每種狀態只帶自己需要的資料**：只有錯誤狀態有 `message`，只有成功狀態有 `data`。
+
+使用時：
+```
+function render(state: LoadState) {
+  if (state.status === "success") {
+    showTable(state.data);       // ✓ 這裡才能用 data
+  } else if (state.status === "error") {
+    showError(state.message);    // ✓ 這裡才能用 message
+  } else {
+    showSpinner();
+  }
+}
+```
+如果你在 `loading` 分支裡想用 `state.data`，編譯器會報錯：「載入中的狀態沒有 data。」**不合理的組合從型別層面就不可能存在。**
+
+**比喻：**紅綠燈一次只會亮一個顏色。用三個獨立開關控制紅、黃、綠燈，可能不小心三個同時亮；用一個「只能指向其中一格」的旋鈕，就不可能出錯。
+
+@section 前後端的型別要對齊
+前端的 `interface Student`，必須和後端 FastAPI 的 `StudentRead` 模型（第 51 課）**完全對應**：
+- 欄位名稱一致（後端叫 `name`，前端就不能叫 `fullName`）；
+- 哪些欄位可能是 `null`，兩邊說法一致（後端 `average: float | None`，前端就是 `average: number | null`）。
+
+**常見錯誤：前端自己憑感覺寫一份 interface。**和後端對不上，型別檢查就形同虛設：編譯器檢查的是一份錯誤的設計圖。
+
+**更好的做法：從後端自動產生。**第 50 課提過，FastAPI 會自動產生 OpenAPI 規格（`/openapi.json`）。有工具可以讀這份規格，**自動產生**前端的 TypeScript 型別。後端一改欄位，重新產生型別，前端所有用到舊欄位的地方立刻冒出紅線。
+
+這就是第 41 課「契約優先」的具體實踐：**一份契約，兩端共用。**
+
+@section 走一遍：升級學生管理頁面
+**第一步：定義型別。**依照後端 `StudentRead`，寫出 `interface Student`。
+
+**第二步：寫型別守衛。**`isStudent` 逐欄檢查，記得排除 `null`。
+
+**第三步：在網路邊界驗證。**
+```
+async function fetchStudents(): Promise<Student[]> {
+  const res = await fetch(API + "/students");
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  const raw: unknown = await res.json();
+  if (!Array.isArray(raw) || !raw.every(isStudent)) {
+    throw new Error("學生資料格式不符合契約");
+  }
+  return raw;
+}
+```
+
+**第四步：故意寫錯，看編譯器抓不抓得到。**
+```
+const bad: Student = { id: 1, name: 123, age: 18, average: null };
+```
+執行 `npx tsc --noEmit`（只做型別檢查、不產生檔案），一秒內就報錯：
+```
+Type 'number' is not assignable to type 'string'.
+```
+這行錯誤的程式碼，**在上線前就被擋下了**。把這個指令放進第 65 課的 CI 流程，每次提交程式碼都會自動檢查。
+
+@section 動動腦：判斷看看
+**題一**：寫了 `interface Student` 並用 `as Student[]` 轉換 `res.json()` 的結果，執行期會自動驗證資料嗎？
+→ 不會。型別在轉譯時被擦除，`as` 只是對編譯器的承諾，不產生任何檢查。
+
+**題二**：外部資料應該宣告成 `any` 還是 `unknown`？
+→ `unknown`。它強迫你先檢查才能使用；`any` 會關掉所有檢查並傳染整條呼叫鏈。
+
+**題三**：型別守衛只寫 `typeof value === "object"`，會漏掉什麼？
+→ `null` 和陣列，因為 `typeof null` 和 `typeof []` 都是 `"object"`。
+
+**題四**：用 `isLoading`、`error`、`data` 三個獨立變數管理狀態，有什麼風險？
+→ 可能出現不合理的組合（例如同時載入中又有錯誤）；改用辨識聯合型別，讓每種狀態只帶自己的資料。
+
+@section 本課重點整理
+- **TypeScript**：加上型別的 JavaScript，把錯誤從執行期提前到編譯期；務必開 `strict: true`。
+- **型別擦除**：型別只存在於編譯期，轉成 JavaScript 後完全消失，不會自動驗證網路資料。
+- **三種態度**：`any` 關掉檢查、`as` 是未經驗證的承諾、`unknown` 強迫先檢查再使用。
+- **型別守衛**：`value is Student`，在執行期真正逐欄檢查；記得 `typeof null === "object"`。
+- **辨識聯合型別**：用共同的 `status` 欄位區分狀態，讓不合理的組合無法存在。
+- **前後端對齊**：前端型別要和後端 Schema 一致，最好從 OpenAPI 自動產生。
+
+@term TypeScript
+加上靜態型別檢查的 JavaScript，在編譯期抓出型別錯誤。
+@term 動態型別
+變數的型別在執行時才決定，錯誤要執行到該行才發現（Dynamic Typing）。
+@term 編譯期
+程式在執行之前，由編譯器檢查與轉譯的階段（Compile-time）。
+@term 執行期
+程式實際在瀏覽器或伺服器上運行的階段（Runtime）。
+@term interface
+TypeScript 中描述物件應有欄位與型別的語法。
+@term strictNullChecks
+TypeScript 設定，讓 null 與一般型別區分開來，強迫處理空值。
+@term 型別擦除
+TypeScript 轉譯成 JavaScript 時，所有型別資訊被移除（Type Erasure）。
+@term any
+關閉型別檢查的 TypeScript 型別，會傳染到整條呼叫鏈。
+@term 型別斷言
+用 as 告訴編譯器某值是特定型別，不會產生執行期檢查（Type Assertion）。
+@term unknown
+表示型別未知、必須先檢查才能使用的安全型別。
+@term 型別守衛
+在執行期檢查資料，並讓編譯器確認其型別的函式（Type Guard）。
+@term 辨識聯合型別
+以共同標籤欄位區分多種狀態的聯合型別（Discriminated Union）。
+@term Zod
+前端常用的執行期資料驗證套件，概念類似 Pydantic。
